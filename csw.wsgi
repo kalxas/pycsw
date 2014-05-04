@@ -59,7 +59,7 @@ import sys
 app_path = os.path.dirname(__file__)
 sys.path.append(app_path)
 
-from pycsw import server
+from pycsw.csw3 import server
 
 
 def application(env, start_response):
