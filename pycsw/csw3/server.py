@@ -507,8 +507,6 @@ class Csw(object):
 
             if self.kvp['request'] == 'GetCapabilities':
                 self.response = self.getcapabilities()
-            elif self.kvp['request'] == 'DescribeRecord':
-                self.response = self.describerecord()
             elif self.kvp['request'] == 'GetDomain':
                 self.response = self.getdomain()
             elif self.kvp['request'] == 'GetRecords':
@@ -519,8 +517,6 @@ class Csw(object):
                     self.response = self.getrecords()
             elif self.kvp['request'] == 'GetRecordById':
                 self.response = self.getrecordbyid()
-            elif self.kvp['request'] == 'GetRepositoryItem':
-                self.response = self.getrepositoryitem()
             elif self.kvp['request'] == 'Transaction':
                 self.response = self.transaction()
             elif self.kvp['request'] == 'Harvest':
@@ -937,73 +933,6 @@ class Csw(object):
             etree.SubElement(idcaps, util.nspath_eval('fes:%s' % idcap,
             self.context.namespaces))
 
-        return node
-
-    def describerecord(self):
-        ''' Handle DescribeRecord request '''
-
-        if 'typename' not in self.kvp or \
-        len(self.kvp['typename']) == 0:  # missing typename
-        # set to return all typenames
-            self.kvp['typename'] = ['csw3:Record']
-
-            if self.profiles is not None:
-                for prof in self.profiles['loaded'].keys():
-                    self.kvp['typename'].append(
-                    self.profiles['loaded'][prof].typename)
-
-        elif self.requesttype == 'GET':  # pass via GET
-            self.kvp['typename'] = self.kvp['typename'].split(',')
-
-        if ('outputformat' in self.kvp and
-            self.kvp['outputformat'] not in
-            self.context.model['operations']['DescribeRecord']
-            ['parameters']['outputFormat']['values']):  # bad outputformat
-            return self.exceptionreport('InvalidParameterValue',
-            'outputformat', 'Invalid value for outputformat: %s' %
-            self.kvp['outputformat'])
-
-        if ('schemalanguage' in self.kvp and
-            self.kvp['schemalanguage'] not in
-            self.context.model['operations']['DescribeRecord']['parameters']
-            ['schemaLanguage']['values']):  # bad schemalanguage
-            return self.exceptionreport('InvalidParameterValue',
-            'schemalanguage', 'Invalid value for schemalanguage: %s' %
-            self.kvp['schemalanguage'])
-
-        node = etree.Element(util.nspath_eval('csw3:DescribeRecordResponse',
-        self.context.namespaces), nsmap=self.context.namespaces)
-
-        node.attrib[util.nspath_eval('xsi:schemaLocation',
-        self.context.namespaces)] = \
-        '%s %s/csw/3.0/cswGetRecords.xsd' % (self.context.namespaces['csw'],
-        self.config.get('server', 'ogc_schemas_base'))
-
-        for typename in self.kvp['typename']:
-            if typename.find(':') == -1:  # unqualified typename
-                return self.exceptionreport('InvalidParameterValue',
-                'typename', 'Typename not qualified: %s' % typename)
-            if typename == 'csw3:Record':   # load core schema
-                LOGGER.debug('Writing csw3:Record schema.')
-                schemacomponent = etree.SubElement(node,
-                util.nspath_eval('csw3:SchemaComponent', self.context.namespaces),
-                schemaLanguage='XMLSCHEMA',
-                targetNamespace=self.context.namespaces['csw'])
-
-                path = os.path.join(self.config.get('server', 'home'),
-                'schemas', 'ogc', 'csw', '3.0', 'record.xsd')
-
-                dublincore = etree.parse(path).getroot()
-
-                schemacomponent.append(dublincore)
-
-            if self.profiles is not None:
-                for prof in self.profiles['loaded'].keys():
-                    if self.profiles['loaded'][prof].typename == typename:
-                        scnodes = \
-                        self.profiles['loaded'][prof].get_schemacomponents()
-                        if scnodes is not None:
-                            map(node.append, scnodes)
         return node
 
     def getdomain(self):
@@ -1467,7 +1396,7 @@ class Csw(object):
         else:
             return node
 
-    def getrecordbyid(self, raw=False):
+    def getrecordbyid(self):
         ''' Handle GetRecordById request '''
 
         if 'id' not in self.kvp:
@@ -1517,14 +1446,7 @@ class Csw(object):
 
         if len(results) == 0:
             return self.exceptionreport('InvalidParameterValue',
-            'outputschema', 'Identifier not found: %s' % self.kvp['id'])
-
-
-        if raw:  # GetRepositoryItem request
-            LOGGER.debug('GetRepositoryItem request.')
-            if len(results) > 0:
-                return etree.fromstring(util.getqattr(results[0],
-                self.context.md_core_model['mappings']['pycsw:XML']))
+            'id', 'Identifier not found: %s' % self.kvp['id'])
 
         for result in results:
             if (util.getqattr(result,
@@ -1559,21 +1481,7 @@ class Csw(object):
                        result, self.kvp['elementsetname'],
                        self.kvp['outputschema'], self.repository.queryables['_all'])
 
-        if raw and len(results) == 0:
-            return None
-
         return node
-
-    def getrepositoryitem(self):
-        ''' Handle GetRepositoryItem request '''
-
-        # similar to GetRecordById without csw3:* wrapping
-        node = self.getrecordbyid(raw=True)
-        if node is None:
-            return self.exceptionreport('NotFound', 'id',
-            'No repository item found for \'%s\'' % self.kvp['id'])
-        else:
-            return node
 
     def transaction(self):
         ''' Handle Transaction request '''
@@ -1931,20 +1839,6 @@ class Csw(object):
                 request['sections'] = ','.join([section.text for section in \
                 doc.findall(util.nspath_eval('ows2:Sections/ows2:Section',
                 self.context.namespaces))])
-
-        # DescribeRecord
-        if request['request'] == 'DescribeRecord':
-            request['typename'] = [typename.text for typename in \
-            doc.findall(util.nspath_eval('csw3:TypeName',
-            self.context.namespaces))]
-
-            tmp = doc.find('.').attrib.get('schemaLanguage')
-            if tmp is not None:
-                request['schemalanguage'] = tmp
-
-            tmp = doc.find('.').attrib.get('outputFormat')
-            if tmp is not None:
-                request['outputformat'] = tmp
 
         # GetDomain
         if request['request'] == 'GetDomain':

@@ -155,24 +155,6 @@ class StaticContext(object):
                         }
                     }
                 },
-                'DescribeRecord': {
-                    'methods': {
-                        'get': True,
-                        'post': True,
-                    },
-                    'parameters': {
-                        'schemaLanguage': {
-                            'values': ['http://www.w3.org/XML/Schema',
-                            'http://www.w3.org/TR/xmlschema-1/']
-                        },
-                        'typeName': {
-                            'values': ['csw:Record']
-                        },
-                        'outputFormat': {
-                            'values': ['application/xml', 'application/json']
-                        }
-                    }
-                },
                 'GetRecords': {
                     'methods': {
                         'get': True,
@@ -218,14 +200,6 @@ class StaticContext(object):
                         }
                     }
                 },
-                'GetRepositoryItem': {
-                    'methods': {
-                        'get': True,
-                        'post': False,
-                    },
-                    'parameters': {
-                    }
-                }
             },
             'parameters': {
                 'version': {
