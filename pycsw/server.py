@@ -1226,6 +1226,7 @@ class Csw(object):
             #Parse kvp and make a Filter XML from OpenSearch module
             self.kvp['constraintlanguage'] = 'FILTER'
             self.kvp['constraint'] = opensearch.kvp2FilterXML(self.kvp)
+            LOGGER.debug('OpenSearch Geo/Time parameters to Filter: %s.' % self.kvp['constraint'])
 
         if self.requesttype == 'GET':
             if 'constraint' in self.kvp:
