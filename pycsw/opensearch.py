@@ -67,3 +67,8 @@ class OpenSearch(object):
                 node.append(rec)
 
         return node
+
+
+def kvp2FilterXML(kvp):
+    pass
+
