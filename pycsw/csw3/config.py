@@ -186,7 +186,7 @@ class StaticContext(object):
                             'values': ['csw:Record']
                         },
                         'outputSchema': {
-                            'values': ['http://www.opengis.net/cat/csw/2.0.2']
+                            'values': ['http://www.opengis.net/cat/csw/3.0']
                         },
                         'outputFormat': {
                             'values': ['application/xml', 'application/json']
@@ -208,7 +208,7 @@ class StaticContext(object):
                     },
                     'parameters': {
                         'outputSchema': {
-                            'values': ['http://www.opengis.net/cat/csw/2.0.2']
+                            'values': ['http://www.opengis.net/cat/csw/3.0']
                         },
                         'outputFormat': {
                             'values': ['application/xml', 'application/json']

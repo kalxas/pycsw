@@ -558,11 +558,11 @@ class Csw(object):
 
         node = etree.Element(util.nspath_eval('ows2:ExceptionReport',
         self.context.namespaces), nsmap=self.context.namespaces,
-        version='1.2.0', language=language)
+        version='3.0.0', language=language)
 
         node.attrib[util.nspath_eval('xsi:schemaLocation',
         self.context.namespaces)] = \
-        '%s %s/ows/1.0.0/owsExceptionReport.xsd' % \
+        '%s %s/ows/2.0/owsExceptionReport.xsd' % \
         (self.context.namespaces['ows2'], ogc_schemas_base)
 
         exception = etree.SubElement(node, util.nspath_eval('ows2:Exception',
@@ -895,7 +895,7 @@ class Csw(object):
         fes.MODEL['GeometryOperands']['values']:
             etree.SubElement(geomops,
             util.nspath_eval('fes:GeometryOperand',
-            self.context.namespaces)).text = geomtype
+            self.context.namespaces), name=geomtype)
 
         spatialops = etree.SubElement(spatialcaps,
         util.nspath_eval('fes:SpatialOperators', self.context.namespaces))
@@ -918,22 +918,17 @@ class Csw(object):
         for cmpop in fes.MODEL['ComparisonOperators'].keys():
             etree.SubElement(cmpops,
             util.nspath_eval('fes:ComparisonOperator',
-            self.context.namespaces)).text = \
-            fes.MODEL['ComparisonOperators'][cmpop]['opname']
+            self.context.namespaces), name=fes.MODEL['ComparisonOperators'][cmpop]['opname'])
 
-        arithops = etree.SubElement(scalarcaps,
-        util.nspath_eval('fes:ArithmeticOperators', self.context.namespaces))
-
-        functions = etree.SubElement(arithops,
+        functions = etree.SubElement(fltcaps,
         util.nspath_eval('fes:Functions', self.context.namespaces))
 
-        functionames = etree.SubElement(functions,
-        util.nspath_eval('fes:FunctionNames', self.context.namespaces))
-
         for fnop in sorted(fes.MODEL['Functions'].keys()):
-            etree.SubElement(functionames,
-            util.nspath_eval('fes:FunctionName', self.context.namespaces),
-            nArgs=fes.MODEL['Functions'][fnop]['args']).text = fnop
+            func = etree.SubElement(functions,
+                   util.nspath_eval('fes:Function', self.context.namespaces),
+                   name=fnop)
+
+            etree.SubElement(func, util.nspath_eval('fes:Returns', self.context.namespaces)).text = 'xsd:string'
 
         idcaps = etree.SubElement(fltcaps,
         util.nspath_eval('fes:Id_Capabilities', self.context.namespaces))
@@ -1024,7 +1019,7 @@ class Csw(object):
 
         node.attrib[util.nspath_eval('xsi:schemaLocation',
         self.context.namespaces)] = '%s %s/csw/3.0/cswGetDomain.xsd' % \
-        (self.context.namespaces['csw'],
+        (self.context.namespaces['csw3'],
         self.config.get('server', 'ogc_schemas_base'))
 
         if 'parametername' in self.kvp:
@@ -1032,7 +1027,7 @@ class Csw(object):
                 LOGGER.debug('Parsing parametername %s.' % pname)
                 domainvalue = etree.SubElement(node,
                 util.nspath_eval('csw3:DomainValues', self.context.namespaces),
-                type='csw3:Record')
+                type='csw:Record')
                 etree.SubElement(domainvalue,
                 util.nspath_eval('csw3:ParameterName',
                 self.context.namespaces)).text = pname
@@ -1073,7 +1068,7 @@ class Csw(object):
                                 dvtype = self.profiles['loaded'][prof].typename
                                 break
                 if not dvtype:
-                    dvtype = 'csw3:Record'
+                    dvtype = 'csw:Record'
 
                 domainvalue = etree.SubElement(node,
                 util.nspath_eval('csw3:DomainValues', self.context.namespaces),
@@ -1482,10 +1477,7 @@ class Csw(object):
             return self.exceptionreport('InvalidParameterValue', 'id',
             'Invalid id parameter')
         if 'outputschema' not in self.kvp:
-            self.kvp['outputschema'] = self.context.namespaces['csw']
-
-        if self.requesttype == 'GET':
-            self.kvp['id'] = self.kvp['id'].split(',')
+            self.kvp['outputschema'] = self.context.namespaces['csw3']
 
         if ('outputformat' in self.kvp and
             self.kvp['outputformat'] not in
@@ -1517,26 +1509,31 @@ class Csw(object):
 
         node.attrib[util.nspath_eval('xsi:schemaLocation',
         self.context.namespaces)] = '%s %s/csw/3.0/cswGetRecordById.xsd' % \
-        (self.context.namespaces['csw'], self.config.get('server', 'ogc_schemas_base'))
+        (self.context.namespaces['csw3'], self.config.get('server', 'ogc_schemas_base'))
 
         # query repository
-        LOGGER.debug('Querying repository with ids: %s.' % self.kvp['id'][0])
-        results = self.repository.query_ids(self.kvp['id'])
+        LOGGER.debug('Querying repository with id: %s.' % self.kvp['id'])
+        results = self.repository.query_ids([self.kvp['id']])
+
+        if len(results) == 0:
+            return self.exceptionreport('InvalidParameterValue',
+            'outputschema', 'Identifier not found: %s' % self.kvp['id'])
+
 
         if raw:  # GetRepositoryItem request
             LOGGER.debug('GetRepositoryItem request.')
             if len(results) > 0:
                 return etree.fromstring(util.getqattr(results[0],
-                self.context.md_core_model['mappings']['pycsw3:XML']))
+                self.context.md_core_model['mappings']['pycsw:XML']))
 
         for result in results:
             if (util.getqattr(result,
-            self.context.md_core_model['mappings']['pycsw3:Typename']) == 'csw3:Record'
+            self.context.md_core_model['mappings']['pycsw:Typename']) == 'csw3:Record'
             and self.kvp['outputschema'] ==
             'http://www.opengis.net/cat/csw/3.0'):
                 # serialize record inline
-                node.append(self._write_record(
-                result, self.repository.queryables['_all']))
+                node = self._write_record(
+                result, self.repository.queryables['_all'])
             elif (self.kvp['outputschema'] ==
                 'http://www.opengis.net/cat/csw/3.0'):
                 # serialize into csw3:Record model
@@ -1544,7 +1541,7 @@ class Csw(object):
 
                 for prof in self.profiles['loaded']:  # find source typename
                     if self.profiles['loaded'][prof].typename in \
-                    [util.getqattr(result, self.context.md_core_model['mappings']['pycsw3:Typename'])]:
+                    [util.getqattr(result, self.context.md_core_model['mappings']['pycsw:Typename'])]:
                         typename = self.profiles['loaded'][prof].typename
                         break
 
@@ -1553,15 +1550,14 @@ class Csw(object):
                     self.context.model['typenames'][typename]\
                     ['mappings']['csw3:Record'], reverse=True)
 
-                node.append(self._write_record(
-                result, self.repository.queryables['_all']))
+                node = self._write_record(
+                result, self.repository.queryables['_all'])
             elif self.kvp['outputschema'] in self.outputschemas.keys():  # use outputschema serializer
-                node.append(self.outputschemas[self.kvp['outputschema']].write_record(result, self.kvp['elementsetname'], self.context, self.config.get('server', 'url')))
+                node = self.outputschemas[self.kvp['outputschema']].write_record(result, self.kvp['elementsetname'], self.context, self.config.get('server', 'url'))
             else:  # it's a profile output
-                node.append(
-                self.profiles['loaded'][self.kvp['outputschema']].write_record(
-                result, self.kvp['elementsetname'],
-                self.kvp['outputschema'], self.repository.queryables['_all']))
+                node = self.profiles['loaded'][self.kvp['outputschema']].write_record(
+                       result, self.kvp['elementsetname'],
+                       self.kvp['outputschema'], self.repository.queryables['_all'])
 
         if raw and len(results) == 0:
             return None
@@ -1609,7 +1605,7 @@ class Csw(object):
                 LOGGER.debug('Transaction operation: %s' % record)
 
                 if not hasattr(record,
-                self.context.md_core_model['mappings']['pycsw3:Identifier']):
+                self.context.md_core_model['mappings']['pycsw:Identifier']):
                     return self.exceptionreport('NoApplicableCode',
                     'insert', 'Record requires an identifier')
 
@@ -1621,9 +1617,9 @@ class Csw(object):
                     inserted += 1
                     insertresults.append(
                     {'identifier': getattr(record,
-                    self.context.md_core_model['mappings']['pycsw3:Identifier']),
+                    self.context.md_core_model['mappings']['pycsw:Identifier']),
                     'title': getattr(record,
-                    self.context.md_core_model['mappings']['pycsw3:Title'])})
+                    self.context.md_core_model['mappings']['pycsw:Title'])})
                 except Exception, err:
                     return self.exceptionreport('NoApplicableCode',
                     'insert', 'Transaction (insert) failed: %s.' % str(err))
@@ -1635,7 +1631,7 @@ class Csw(object):
                         record = metadata.parse_record(self.context,
                         ttype['xml'], self.repository)[0]
                         identifier = getattr(record,
-                        self.context.md_core_model['mappings']['pycsw3:Identifier'])
+                        self.context.md_core_model['mappings']['pycsw:Identifier'])
                     except Exception, err:
                         return self.exceptionreport('NoApplicableCode', 'insert',
                         'Transaction (update) failed: record parsing failed: %s' \
@@ -1776,20 +1772,20 @@ class Csw(object):
             else:
                 src = self.kvp['source']
 
-            setattr(record, self.context.md_core_model['mappings']['pycsw3:Source'],
+            setattr(record, self.context.md_core_model['mappings']['pycsw:Source'],
                     src)
 
-            setattr(record, self.context.md_core_model['mappings']['pycsw3:InsertDate'],
+            setattr(record, self.context.md_core_model['mappings']['pycsw:InsertDate'],
             util.get_today_and_now())
 
             identifier = getattr(record,
-            self.context.md_core_model['mappings']['pycsw3:Identifier'])
+            self.context.md_core_model['mappings']['pycsw:Identifier'])
             source = getattr(record,
-            self.context.md_core_model['mappings']['pycsw3:Source'])
+            self.context.md_core_model['mappings']['pycsw:Source'])
             insert_date = getattr(record,
-            self.context.md_core_model['mappings']['pycsw3:InsertDate'])
+            self.context.md_core_model['mappings']['pycsw:InsertDate'])
             title = getattr(record,
-            self.context.md_core_model['mappings']['pycsw3:Title'])
+            self.context.md_core_model['mappings']['pycsw:Title'])
 
 
             ir.append({'identifier': identifier, 'title': title})
@@ -2065,8 +2061,10 @@ class Csw(object):
 
         # GetRecordById
         if request['request'] == 'GetRecordById':
-            request['id'] = [id1.text for id1 in \
-            doc.findall(util.nspath_eval('csw3:Id', self.context.namespaces))]
+            tmp = doc.find(util.nspath_eval('csw3:Id', self.context.namespaces))
+            
+            if tmp is not None:
+                request['id'] = tmp.text
 
             tmp = doc.find(util.nspath_eval('csw3:ElementSetName',
                   self.context.namespaces))
@@ -2181,7 +2179,7 @@ class Csw(object):
             elname = 'Record'
 
         record = etree.Element(util.nspath_eval('csw3:%s' % elname,
-                 self.context.namespaces))
+                 self.context.namespaces), nsmap=self.context.namespaces)
 
         if ('elementname' in self.kvp and
             len(self.kvp['elementname']) > 0):
@@ -2189,7 +2187,7 @@ class Csw(object):
                 if (elemname.find('BoundingBox') != -1 or
                     elemname.find('Envelope') != -1):
                     bboxel = write_boundingbox(util.getqattr(recobj,
-                    self.context.md_core_model['mappings']['pycsw3:BoundingBox']),
+                    self.context.md_core_model['mappings']['pycsw:BoundingBox']),
                     self.context.namespaces)
                     if bboxel is not None:
                         record.append(bboxel)
@@ -2202,19 +2200,19 @@ class Csw(object):
         elif 'elementsetname' in self.kvp:
             if (self.kvp['elementsetname'] == 'full' and
             util.getqattr(recobj, self.context.md_core_model['mappings']\
-            ['pycsw3:Typename']) == 'csw3:Record' and
+            ['pycsw:Typename']) == 'csw3:Record' and
             util.getqattr(recobj, self.context.md_core_model['mappings']\
-            ['pycsw3:Schema']) == 'http://www.opengis.net/cat/csw/2.0.2' and
+            ['pycsw:Schema']) == 'http://www.opengis.net/cat/csw/2.0.2' and
             util.getqattr(recobj, self.context.md_core_model['mappings']\
-            ['pycsw3:Type']) != 'service'):
+            ['pycsw:Type']) != 'service'):
                 # dump record as is and exit
                 return etree.fromstring(util.getqattr(recobj,
-                self.context.md_core_model['mappings']['pycsw3:XML']))
+                self.context.md_core_model['mappings']['pycsw:XML']))
 
             etree.SubElement(record,
             util.nspath_eval('dc:identifier', self.context.namespaces)).text = \
             util.getqattr(recobj,
-            self.context.md_core_model['mappings']['pycsw3:Identifier'])
+            self.context.md_core_model['mappings']['pycsw:Identifier'])
 
             for i in ['dc:title', 'dc:type']:
                 val = util.getqattr(recobj, queryables[i]['dbcol'])
@@ -2240,7 +2238,7 @@ class Csw(object):
 
                 # links
                 rlinks = util.getqattr(recobj,
-                self.context.md_core_model['mappings']['pycsw3:Links'])
+                self.context.md_core_model['mappings']['pycsw:Links'])
 
                 if rlinks:
                     links = rlinks.split('^')
@@ -2268,7 +2266,7 @@ class Csw(object):
 
             # always write out ows2:BoundingBox
             bboxel = write_boundingbox(getattr(recobj,
-            self.context.md_core_model['mappings']['pycsw3:BoundingBox']),
+            self.context.md_core_model['mappings']['pycsw:BoundingBox']),
             self.context.namespaces)
 
             if bboxel is not None:

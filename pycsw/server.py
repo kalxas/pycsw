@@ -1075,7 +1075,7 @@ class Csw(object):
                 util.nspath_eval('csw:DomainValues', self.context.namespaces),
                 type=dvtype)
                 etree.SubElement(domainvalue,
-                util.nspath_eval('csw:PropertyName',
+                util.nspath_eval('csw3:ValueReference',
                 self.context.namespaces)).text = pname
 
                 try:
@@ -1953,7 +1953,7 @@ class Csw(object):
             if tmp is not None:
                 request['parametername'] = tmp.text
 
-            tmp = doc.find(util.nspath_eval('csw:PropertyName',
+            tmp = doc.find(util.nspath_eval('csw3:ValueReference',
                   self.context.namespaces))
             if tmp is not None:
                 request['propertyname'] = tmp.text
@@ -2027,7 +2027,7 @@ class Csw(object):
                 LOGGER.debug('No csw:Constraint (ogc:Filter or csw:CqlText) \
                 specified.')
 
-            tmp = doc.find(util.nspath_eval('csw:Query/ogc:SortBy',
+            tmp = doc.find(util.nspath_eval('csw:Query/fes:SortBy',
                   self.context.namespaces))
             if tmp is not None:
                 LOGGER.debug('Sorted query specified.')
@@ -2036,7 +2036,7 @@ class Csw(object):
 
                 try:
                     elname = tmp.find(util.nspath_eval(
-                    'ogc:SortProperty/ogc:PropertyName',
+                    'fes:SortProperty/fes:ValueReference',
                     self.context.namespaces)).text
 
                     request['sortby']['propertyname'] = \
@@ -2048,7 +2048,7 @@ class Csw(object):
                         request['sortby']['spatial'] = True
                 except Exception, err:
                     errortext = \
-                    'Invalid ogc:SortProperty/ogc:PropertyName: %s' % str(err)
+                    'Invalid fes:SortProperty/fes:ValueReference: %s' % str(err)
                     LOGGER.debug(errortext)
                     return errortext
 

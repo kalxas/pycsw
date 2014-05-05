@@ -116,19 +116,19 @@ def parse(element, queryables, dbtype, nsmap, orm='sqlalchemy', language='englis
             fname = elem.xpath('child::*')[0].attrib['name']
 
             try:
-                LOGGER.debug('Testing existence of ogc:PropertyName')
-                pname = queryables[elem.find(util.nspath_eval('ogc:Function/ogc:PropertyName', nsmap)).text]['dbcol']
+                LOGGER.debug('Testing existence of fes:ValueReference')
+                pname = queryables[elem.find(util.nspath_eval('ogc:Function/fes:ValueReference', nsmap)).text]['dbcol']
             except Exception, err:
-                raise RuntimeError('Invalid PropertyName: %s.  %s' % (elem.find(util.nspath_eval('ogc:Function/ogc:PropertyName', nsmap)).text, str(err)))
+                raise RuntimeError('Invalid fes:ValueReference: %s.  %s' % (elem.find(util.nspath_eval('ogc:Function/fes:ValueReference', nsmap)).text, str(err)))
 
         else:
             try:
-                LOGGER.debug('Testing existence of ogc:PropertyName')
+                LOGGER.debug('Testing existence of fes:ValueReference')
                 pname = queryables[elem.find(
-                    util.nspath_eval('ogc:PropertyName', nsmap)).text]['dbcol']
+                    util.nspath_eval('fes:ValueReference', nsmap)).text]['dbcol']
             except Exception, err:
-                raise RuntimeError('Invalid PropertyName: %s.  %s' %
-                                   (elem.find(util.nspath_eval('ogc:PropertyName',
+                raise RuntimeError('Invalid fes:ValueReference: %s.  %s' %
+                                   (elem.find(util.nspath_eval('fes:ValueReference',
                                    nsmap)).text, str(err)))
 
         if (elem.tag != util.nspath_eval('ogc:PropertyIsBetween', nsmap)):
@@ -283,7 +283,7 @@ def parse(element, queryables, dbtype, nsmap, orm='sqlalchemy', language='englis
 
 def _get_spatial_operator(geomattr, element, dbtype, nsmap, postgis_geometry_column='wkb_geometry'):
     """return the spatial predicate function"""
-    property_name = element.find(util.nspath_eval('ogc:PropertyName', nsmap))
+    property_name = element.find(util.nspath_eval('fes:ValueReference', nsmap))
     distance = element.find(util.nspath_eval('ogc:Distance', nsmap))
 
     distance = 'false' if distance is None else distance.text
@@ -291,10 +291,10 @@ def _get_spatial_operator(geomattr, element, dbtype, nsmap, postgis_geometry_col
     LOGGER.debug('Scanning for spatial property name')
 
     if property_name is None:
-        raise RuntimeError('Missing ogc:PropertyName in spatial filter')
+        raise RuntimeError('Missing fes:ValueReference in spatial filter')
     if (property_name.text.find('BoundingBox') == -1 and
             property_name.text.find('Envelope') == -1):
-        raise RuntimeError('Invalid ogc:PropertyName in spatial filter: %s' %
+        raise RuntimeError('Invalid fes:ValueReference in spatial filter: %s' %
                            property_name.text)
 
     geometry = gml.Geometry(element, nsmap)
