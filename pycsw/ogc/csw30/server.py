@@ -817,16 +817,7 @@ class Csw(object):
                     util.nspath_eval('ows:Parameter',
                     self.context.namespaces), name=parameter)
 
-                    allowedvalues = etree.SubElement(param,
-                    util.nspath_eval('ows:AllowedValues',
-                    self.context.namespaces))
-
-                    for val in \
-                    self.context.model['operations'][operation]\
-                    ['parameters'][parameter]['values']:
-                        etree.SubElement(allowedvalues,
-                        util.nspath_eval('ows:Value',
-                        self.context.namespaces)).text = val
+                    param.append(self._write_allowed_values(self.context.model['operations'][operation]['parameters'][parameter]['values']))
 
                 if operation == 'GetRecords':  # advertise queryables
                     for qbl in self.repository.queryables.keys():
@@ -835,10 +826,7 @@ class Csw(object):
                             util.nspath_eval('ows:Constraint',
                             self.context.namespaces), name=qbl)
 
-                            for qbl2 in self.repository.queryables[qbl]:
-                                etree.SubElement(param,
-                                util.nspath_eval('ows:Value',
-                                self.context.namespaces)).text = qbl2
+                            param.append(self._write_allowed_values(self.repository.queryables[qbl]))
 
                     if self.profiles is not None:
                         for con in self.context.model[\
@@ -846,29 +834,22 @@ class Csw(object):
                             param = etree.SubElement(oper,
                             util.nspath_eval('ows:Constraint',
                             self.context.namespaces), name = con)
-                            for val in self.context.model['operations']\
-                            ['GetRecords']['constraints'][con]['values']:
-                                etree.SubElement(param,
-                                util.nspath_eval('ows:Value',
-                                self.context.namespaces)).text = val
+
+                            param.append(self._write_allowed_values(self.context.model['operations']['GetRecords']['constraints'][con]['values']))
 
             for parameter in self.context.model['parameters'].keys():
                 param = etree.SubElement(operationsmetadata,
                 util.nspath_eval('ows:Parameter', self.context.namespaces),
                 name=parameter)
 
-                for val in self.context.model['parameters'][parameter]['values']:
-                    etree.SubElement(param, util.nspath_eval('ows:Value',
-                    self.context.namespaces)).text = val
+                param.append(self._write_allowed_values(self.context.model['parameters'][parameter]['values']))
 
             for constraint in self.context.model['constraints'].keys():
                 param = etree.SubElement(operationsmetadata,
                 util.nspath_eval('ows:Constraint', self.context.namespaces),
                 name=constraint)
 
-                for val in self.context.model['constraints'][constraint]['values']:
-                    etree.SubElement(param, util.nspath_eval('ows:Value',
-                    self.context.namespaces)).text = val
+                param.append(self._write_allowed_values(self.context.model['constraints'][constraint]['values']))
 
             if self.profiles is not None:
                 for prof in self.profiles['loaded'].keys():
@@ -881,6 +862,40 @@ class Csw(object):
         LOGGER.debug('Writing section Filter_Capabilities.')
         fltcaps = etree.SubElement(node,
         util.nspath_eval('fes:Filter_Capabilities', self.context.namespaces))
+
+        conformance = etree.SubElement(fltcaps,
+        util.nspath_eval('fes:Conformance', self.context.namespaces))
+
+        for conform, value in fes.MODEL['Conformance'].iteritems():
+            constraint = etree.SubElement(conformance,
+                        util.nspath_eval('fes:Constraint',
+                        self.context.namespaces), name=conform)
+            etree.SubElement(constraint, util.nspath_eval('ows11:NoValues',
+                        self.context.namespaces))
+            etree.SubElement(constraint, util.nspath_eval('ows11:DefaultValue',
+                        self.context.namespaces)).text = value
+
+        idcaps = etree.SubElement(fltcaps,
+        util.nspath_eval('fes:Id_Capabilities', self.context.namespaces))
+
+        for idcap in fes.MODEL['Ids']['values']:
+            etree.SubElement(idcaps, util.nspath_eval('fes:ResourceIdentifier',
+            self.context.namespaces), name=idcap)
+
+
+        scalarcaps = etree.SubElement(fltcaps,
+        util.nspath_eval('fes:Scalar_Capabilities', self.context.namespaces))
+
+        etree.SubElement(scalarcaps, util.nspath_eval('fes:LogicalOperators',
+        self.context.namespaces))
+
+        cmpops = etree.SubElement(scalarcaps,
+        util.nspath_eval('fes:ComparisonOperators', self.context.namespaces))
+
+        for cmpop in fes.MODEL['ComparisonOperators'].keys():
+            etree.SubElement(cmpops,
+            util.nspath_eval('fes:ComparisonOperator',
+            self.context.namespaces), name=fes.MODEL['ComparisonOperators'][cmpop]['opname'])
 
         spatialcaps = etree.SubElement(fltcaps,
         util.nspath_eval('fes:Spatial_Capabilities', self.context.namespaces))
@@ -903,20 +918,6 @@ class Csw(object):
             util.nspath_eval('fes:SpatialOperator', self.context.namespaces),
             name=spatial_comparison)
 
-        scalarcaps = etree.SubElement(fltcaps,
-        util.nspath_eval('fes:Scalar_Capabilities', self.context.namespaces))
-
-        etree.SubElement(scalarcaps, util.nspath_eval('fes:LogicalOperators',
-        self.context.namespaces))
-
-        cmpops = etree.SubElement(scalarcaps,
-        util.nspath_eval('fes:ComparisonOperators', self.context.namespaces))
-
-        for cmpop in fes.MODEL['ComparisonOperators'].keys():
-            etree.SubElement(cmpops,
-            util.nspath_eval('fes:ComparisonOperator',
-            self.context.namespaces), name=fes.MODEL['ComparisonOperators'][cmpop]['opname'])
-
         functions = etree.SubElement(fltcaps,
         util.nspath_eval('fes:Functions', self.context.namespaces))
 
@@ -925,14 +926,7 @@ class Csw(object):
                    util.nspath_eval('fes:Function', self.context.namespaces),
                    name=fnop)
 
-            etree.SubElement(func, util.nspath_eval('fes:Returns', self.context.namespaces)).text = 'xsd:string'
-
-        idcaps = etree.SubElement(fltcaps,
-        util.nspath_eval('fes:Id_Capabilities', self.context.namespaces))
-
-        for idcap in fes.MODEL['Ids']['values']:
-            etree.SubElement(idcaps, util.nspath_eval('fes:%s' % idcap,
-            self.context.namespaces))
+            etree.SubElement(func, util.nspath_eval('fes:Returns', self.context.namespaces)).text = 'xs:string'
 
         return node
 
@@ -2428,6 +2422,17 @@ class Csw(object):
             self.context.namespaces)).text = ir['title']
 
         return insertresult
+
+    def _write_allowed_values(self, values):
+        ''' Helper function for ows:Constraint/ows:Parameter design pattern '''
+
+        element = etree.Element(util.nspath_eval('ows:AllowedValues',
+                                                 self.context.namespaces))
+        for val in values:
+            etree.SubElement(element, util.nspath_eval('ows:Value',
+                             self.context.namespaces)).text = val
+
+        return element
 
 def write_boundingbox(bbox, nsmap):
     ''' Generate ows:BoundingBox '''

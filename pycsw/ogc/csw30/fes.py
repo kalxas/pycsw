@@ -37,6 +37,23 @@ from pycsw.core import util
 LOGGER = logging.getLogger(__name__)
 
 MODEL = {
+    'Conformance': {
+        'ImplementsQuery': 'TRUE',
+        'ImplementsAdHocQuery': 'TRUE',
+        'ImplementsFunctions': 'TRUE',
+        'ImplementsResourceld': 'TRUE',
+        'ImplementsMinStandardFilter': 'TRUE',
+        'ImplementsStandardFilter': 'TRUE',
+        'ImplementsMinSpatialFilter': 'TRUE',
+        'ImplementsSpatialFilter': 'TRUE',
+        'ImplementsMinTemporalFilter': 'TRUE',
+        'ImplementsTemporalFilter': 'TRUE',
+        'ImplementsVersionNav': 'TRUE',
+        'ImplementsSorting': 'TRUE',
+        'ImplementsExtendedOperators': 'TRUE',
+        'ImplementsMinimumXPath': 'TRUE',
+        'ImplementsSchemaElementFunc': 'TRUE'
+    },
     'GeometryOperands': {
         'values': gml.TYPES
     },
@@ -45,17 +62,17 @@ MODEL = {
         'DWithin', 'Equals', 'Intersects', 'Overlaps', 'Touches', 'Within']
     },
     'ComparisonOperators': {
-        'ogc:PropertyIsBetween': {'opname': 'Between', 'opvalue': 'and'},
-        'ogc:PropertyIsEqualTo': {'opname': 'EqualTo', 'opvalue': '='},
-        'ogc:PropertyIsGreaterThan': {'opname': 'GreaterThan', 'opvalue': '>'},
+        'ogc:PropertyIsBetween': {'opname': 'PropertyIsBetween', 'opvalue': 'and'},
+        'ogc:PropertyIsEqualTo': {'opname': 'PropertyIsEqualTo', 'opvalue': '='},
+        'ogc:PropertyIsGreaterThan': {'opname': 'PropertyIsGreaterThan', 'opvalue': '>'},
         'ogc:PropertyIsGreaterThanOrEqualTo': {
-            'opname': 'GreaterThanEqualTo', 'opvalue': '>='},
-        'ogc:PropertyIsLessThan': {'opname': 'LessThan', 'opvalue': '<'},
+            'opname': 'PropertyIsGreaterThanOrEqualTo', 'opvalue': '>='},
+        'ogc:PropertyIsLessThan': {'opname': 'PropertyIsLessThan', 'opvalue': '<'},
         'ogc:PropertyIsLessThanOrEqualTo': {
-            'opname': 'LessThanEqualTo', 'opvalue': '<='},
-        'ogc:PropertyIsLike': {'opname': 'Like', 'opvalue': 'like'},
-        'ogc:PropertyIsNotEqualTo': {'opname': 'NotEqualTo', 'opvalue': '!='},
-        'ogc:PropertyIsNull': {'opname': 'NullCheck', 'opvalue': 'is null'},
+            'opname': 'PropertyIsLessThanOrEqualTo', 'opvalue': '<='},
+        'ogc:PropertyIsLike': {'opname': 'PropertyIsLike', 'opvalue': 'like'},
+        'ogc:PropertyIsNotEqualTo': {'opname': 'PropertyIsNotEqualTo', 'opvalue': '!='},
+        'ogc:PropertyIsNull': {'opname': 'PropertyIsNull', 'opvalue': 'is null'},
     },
     'Functions': {
         'length': {'args': '1'},
@@ -66,7 +83,7 @@ MODEL = {
         'upper': {'args': '1'},
     },
     'Ids': {
-        'values': ['EID', 'FID']
+        'values': ['csw:Id']
     }
 }
 

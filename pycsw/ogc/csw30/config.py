@@ -52,6 +52,7 @@ class StaticContext(object):
 
         self.namespaces = {
             'atom': 'http://www.w3.org/2005/Atom',
+            'csw': 'http://www.opengis.net/cat/csw/3.0',
             'csw30': 'http://www.opengis.net/cat/csw/3.0',
             'dc': 'http://purl.org/dc/elements/1.1/',
             'dct': 'http://purl.org/dc/terms/',
@@ -59,8 +60,9 @@ class StaticContext(object):
             'fes': 'http://www.opengis.net/fes/2.0',
             'fgdc': 'http://www.opengis.net/cat/csw/csdgm',
             'gmd': 'http://www.isotc211.org/2005/gmd',
-            'gml32': 'http://www.opengis.net/gml/3.2',
+            'gml': 'http://www.opengis.net/gml/3.2',
             'os': 'http://a9.com/-/spec/opensearch/1.1/',
+            'ows11': 'http://www.opengis.net/ows/1.1',
             'ows': 'http://www.opengis.net/ows/2.0',
             'rdf': 'http://www.w3.org/1999/02/22-rdf-syntax-ns#',
             'sitemap': 'http://www.sitemaps.org/schemas/sitemap/0.9',
