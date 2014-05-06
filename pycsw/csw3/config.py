@@ -52,7 +52,7 @@ class StaticContext(object):
 
         self.namespaces = {
             'atom': 'http://www.w3.org/2005/Atom',
-            'csw3': 'http://www.opengis.net/cat/csw/3.0',
+            'csw30': 'http://www.opengis.net/cat/csw/3.0',
             'dc': 'http://purl.org/dc/elements/1.1/',
             'dct': 'http://purl.org/dc/terms/',
             'dif': 'http://gcmd.gsfc.nasa.gov/Aboutus/xml/dif/',
@@ -97,8 +97,10 @@ class StaticContext(object):
                 'pycsw:Date': 'date',
                 'pycsw:Modified': 'date_modified',
                 'pycsw:Type': 'type',
-                # geometry, specified in OGC WKT
+                 # geometry, specified in OGC WKT
                 'pycsw:BoundingBox': 'wkt_geometry',
+                 # temporal extent, compound element
+                'pycsw:TemporalExtent': ['time_begin', 'time_end'],
                 'pycsw:CRS': 'crs',
                 'pycsw:AlternateTitle': 'title_alternate',
                 'pycsw:RevisionDate': 'date_revision',
@@ -215,7 +217,16 @@ class StaticContext(object):
                 },
                 'XPathQueryables': {
                     'values': ['allowed']
-                }
+                },
+                'MaxRecordDefault': {
+                    'values': ['10']
+                },
+                'SortLevelLimit': {
+                    'values': ['1']
+                },
+                'HarvestHandlesAttachments': {
+                    'values': ['false']
+                },
             },
             'typenames': {
                 'csw:Record': {
@@ -257,6 +268,8 @@ class StaticContext(object):
                             # bbox and full text map to internal fixed columns
                             'ows:BoundingBox':
                             {'dbcol': self.md_core_model['mappings']['pycsw:BoundingBox']},
+                            'csw:TemporalExtent':
+                            {'dbcol': self.md_core_model['mappings']['pycsw:TemporalExtent']},
                             'csw:AnyText':
                             {'dbcol': self.md_core_model['mappings']['pycsw:AnyText']},
                         }
@@ -298,6 +311,7 @@ class StaticContext(object):
             'dc:relation': 'pycsw:Relation',
             'dc:rights': 'pycsw:AccessConstraints',
             'ows:BoundingBox': 'pycsw:BoundingBox',
+            'csw30:TemporalExtent': 'pycsw:TemporalExtent',
             'csw:AnyText': 'pycsw:AnyText',
         }
 
