@@ -83,6 +83,28 @@ class OpenSearch(object):
         return node
 
 
-def kvp2filterxml(kvp):
-    pass
+def kvp2filterxml(kvp, context):
+    filter_xml = ""
+    valid_xml = ""
+    # Parse KVP 
 
+    # Create FilterXML
+
+    record = etree.Element(util.nspath_eval('ogc:Filter',
+                 context.namespaces))
+
+    # Validate the created XML
+    try:
+        schema = os.path.join(self.config.get('server', 'home'),
+                            'schemas', 'ogc', 'filter', '1.1.0', 'filter.xsd')
+                            self.kvp['constraint'])
+        schema = etree.XMLSchema(file=schema)
+        parser = etree.XMLParser(schema=schema)
+        doc = etree.fromstring(filter_xml, parser)
+        valid_xml = filter_xml #It is valid
+    except Exception, err:
+        errortext = 'Exception: OpenSearch Filter XML document not valid.\nError: %s.' % str(err)
+        LOGGER.debug(errortext)
+        newxml = ""
+        
+    return valid_xml
