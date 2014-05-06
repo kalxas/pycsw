@@ -3,7 +3,7 @@
 #
 # Authors: Tom Kralidis <tomkralidis@gmail.com>
 #
-# Copyright (c) 2010 Tom Kralidis
+# Copyright (c) 2012 Tom Kralidis
 #
 # Permission is hereby granted, free of charge, to any person
 # obtaining a copy of this software and associated documentation
@@ -28,4 +28,12 @@
 #
 # =================================================================
 
-__version__ = '1.9-dev'
+import json
+from pycsw.core.util import exml2dict
+
+
+def exml2json(response, namespaces, pretty_print=False):
+    """Convert an lxml object to JSON"""
+    if pretty_print:
+        return json.dumps(exml2dict(response, namespaces), indent=4)
+    return json.dumps(exml2dict(response, namespaces))

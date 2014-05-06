@@ -31,7 +31,8 @@
 # =================================================================
 
 import logging
-from pycsw import gml, util
+from pycsw.ogc.gml31 import gml
+from pycsw.core import util
 
 LOGGER = logging.getLogger(__name__)
 
