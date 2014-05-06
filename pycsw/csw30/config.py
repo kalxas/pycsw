@@ -61,7 +61,7 @@ class StaticContext(object):
             'gmd': 'http://www.isotc211.org/2005/gmd',
             'gml32': 'http://www.opengis.net/gml/3.2',
             'os': 'http://a9.com/-/spec/opensearch/1.1/',
-            'ows2': 'http://www.opengis.net/ows/2.0',
+            'ows': 'http://www.opengis.net/ows/2.0',
             'rdf': 'http://www.w3.org/1999/02/22-rdf-syntax-ns#',
             'sitemap': 'http://www.sitemaps.org/schemas/sitemap/0.9',
             'soapenv': 'http://www.w3.org/2003/05/soap-envelope',

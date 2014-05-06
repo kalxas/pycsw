@@ -40,7 +40,8 @@ from lxml import etree
 from shapely.wkt import loads
 from pycsw.plugins.profiles import profile as pprofile
 import pycsw.plugins.outputschemas
-from pycsw.csw30 import config, fes, log, metadata, util, sru, opensearch
+from pycsw import log, metadata, util, sru, opensearch
+from pycsw.csw30 import config, fes
 import logging
 
 LOGGER = logging.getLogger(__name__)
@@ -552,21 +553,21 @@ class Csw(object):
             language = 'en-US'
             ogc_schemas_base = self.context.ogc_schemas_base
 
-        node = etree.Element(util.nspath_eval('ows2:ExceptionReport',
+        node = etree.Element(util.nspath_eval('ows:ExceptionReport',
         self.context.namespaces), nsmap=self.context.namespaces,
         version='3.0.0', language=language)
 
         node.attrib[util.nspath_eval('xsi:schemaLocation',
         self.context.namespaces)] = \
         '%s %s/ows/2.0/owsExceptionReport.xsd' % \
-        (self.context.namespaces['ows2'], ogc_schemas_base)
+        (self.context.namespaces['ows'], ogc_schemas_base)
 
-        exception = etree.SubElement(node, util.nspath_eval('ows2:Exception',
+        exception = etree.SubElement(node, util.nspath_eval('ows:Exception',
         self.context.namespaces),
         exceptionCode=code, locator=locator)
 
         etree.SubElement(exception,
-        util.nspath_eval('ows2:ExceptionText',
+        util.nspath_eval('ows:ExceptionText',
         self.context.namespaces)).text = text
 
         return node
@@ -630,59 +631,59 @@ class Csw(object):
             LOGGER.debug('Writing section ServiceIdentification.')
 
             serviceidentification = etree.SubElement(node, \
-            util.nspath_eval('ows2:ServiceIdentification',
+            util.nspath_eval('ows:ServiceIdentification',
             self.context.namespaces))
 
             etree.SubElement(serviceidentification,
-            util.nspath_eval('ows2:Title', self.context.namespaces)).text = \
+            util.nspath_eval('ows:Title', self.context.namespaces)).text = \
             metadata_main.get('identification_title', 'missing')
 
             etree.SubElement(serviceidentification,
-            util.nspath_eval('ows2:Abstract', self.context.namespaces)).text = \
+            util.nspath_eval('ows:Abstract', self.context.namespaces)).text = \
             metadata_main.get('identification_abstract', 'missing')
 
             keywords = etree.SubElement(serviceidentification,
-            util.nspath_eval('ows2:Keywords', self.context.namespaces))
+            util.nspath_eval('ows:Keywords', self.context.namespaces))
 
             for k in \
             metadata_main.get('identification_keywords').split(','):
                 etree.SubElement(
-                keywords, util.nspath_eval('ows2:Keyword',
+                keywords, util.nspath_eval('ows:Keyword',
                 self.context.namespaces)).text = k
 
             etree.SubElement(keywords,
-            util.nspath_eval('ows2:Type', self.context.namespaces),
+            util.nspath_eval('ows:Type', self.context.namespaces),
             codeSpace='ISOTC211/19115').text = \
             metadata_main.get('identification_keywords_type', 'missing')
 
             etree.SubElement(serviceidentification,
-            util.nspath_eval('ows2:ServiceType', self.context.namespaces),
+            util.nspath_eval('ows:ServiceType', self.context.namespaces),
             codeSpace='OGC').text = 'CSW'
 
             etree.SubElement(serviceidentification,
-            util.nspath_eval('ows2:ServiceTypeVersion',
+            util.nspath_eval('ows:ServiceTypeVersion',
             self.context.namespaces)).text = '3.0.0'
 
             etree.SubElement(serviceidentification,
-            util.nspath_eval('ows2:Fees', self.context.namespaces)).text = \
+            util.nspath_eval('ows:Fees', self.context.namespaces)).text = \
             metadata_main.get('identification_fees', 'missing')
 
             etree.SubElement(serviceidentification,
-            util.nspath_eval('ows2:AccessConstraints',
+            util.nspath_eval('ows:AccessConstraints',
             self.context.namespaces)).text = \
             metadata_main.get('identification_accessconstraints', 'missing')
 
         if serviceprovider:
             LOGGER.debug('Writing section ServiceProvider.')
             serviceprovider = etree.SubElement(node,
-            util.nspath_eval('ows2:ServiceProvider', self.context.namespaces))
+            util.nspath_eval('ows:ServiceProvider', self.context.namespaces))
 
             etree.SubElement(serviceprovider,
-            util.nspath_eval('ows2:ProviderName', self.context.namespaces)).text = \
+            util.nspath_eval('ows:ProviderName', self.context.namespaces)).text = \
             metadata_main.get('provider_name', 'missing')
 
             providersite = etree.SubElement(serviceprovider,
-            util.nspath_eval('ows2:ProviderSite', self.context.namespaces))
+            util.nspath_eval('ows:ProviderSite', self.context.namespaces))
 
             providersite.attrib[util.nspath_eval('xlink:type',
             self.context.namespaces)] = 'simple'
@@ -692,65 +693,65 @@ class Csw(object):
             metadata_main.get('provider_url', 'missing')
 
             servicecontact = etree.SubElement(serviceprovider,
-            util.nspath_eval('ows2:ServiceContact', self.context.namespaces))
+            util.nspath_eval('ows:ServiceContact', self.context.namespaces))
 
             etree.SubElement(servicecontact,
-            util.nspath_eval('ows2:IndividualName',
+            util.nspath_eval('ows:IndividualName',
             self.context.namespaces)).text = \
             metadata_main.get('contact_name', 'missing')
 
             etree.SubElement(servicecontact,
-            util.nspath_eval('ows2:PositionName',
+            util.nspath_eval('ows:PositionName',
             self.context.namespaces)).text = \
             metadata_main.get('contact_position', 'missing')
 
             contactinfo = etree.SubElement(servicecontact,
-            util.nspath_eval('ows2:ContactInfo', self.context.namespaces))
+            util.nspath_eval('ows:ContactInfo', self.context.namespaces))
 
-            phone = etree.SubElement(contactinfo, util.nspath_eval('ows2:Phone',
+            phone = etree.SubElement(contactinfo, util.nspath_eval('ows:Phone',
             self.context.namespaces))
 
-            etree.SubElement(phone, util.nspath_eval('ows2:Voice',
+            etree.SubElement(phone, util.nspath_eval('ows:Voice',
             self.context.namespaces)).text = \
             metadata_main.get('contact_phone', 'missing')
 
-            etree.SubElement(phone, util.nspath_eval('ows2:Facsimile',
+            etree.SubElement(phone, util.nspath_eval('ows:Facsimile',
             self.context.namespaces)).text = \
             metadata_main.get('contact_fax', 'missing')
 
             address = etree.SubElement(contactinfo,
-            util.nspath_eval('ows2:Address', self.context.namespaces))
+            util.nspath_eval('ows:Address', self.context.namespaces))
 
             etree.SubElement(address,
-            util.nspath_eval('ows2:DeliveryPoint',
+            util.nspath_eval('ows:DeliveryPoint',
             self.context.namespaces)).text = \
             metadata_main.get('contact_address', 'missing')
 
-            etree.SubElement(address, util.nspath_eval('ows2:City',
+            etree.SubElement(address, util.nspath_eval('ows:City',
             self.context.namespaces)).text = \
             metadata_main.get('contact_city', 'missing')
 
             etree.SubElement(address,
-            util.nspath_eval('ows2:AdministrativeArea',
+            util.nspath_eval('ows:AdministrativeArea',
             self.context.namespaces)).text = \
             metadata_main.get('contact_stateorprovince', 'missing')
 
             etree.SubElement(address,
-            util.nspath_eval('ows2:PostalCode',
+            util.nspath_eval('ows:PostalCode',
             self.context.namespaces)).text = \
             metadata_main.get('contact_postalcode', 'missing')
 
             etree.SubElement(address,
-            util.nspath_eval('ows2:Country', self.context.namespaces)).text = \
+            util.nspath_eval('ows:Country', self.context.namespaces)).text = \
             metadata_main.get('contact_country', 'missing')
 
             etree.SubElement(address,
-            util.nspath_eval('ows2:ElectronicMailAddress',
+            util.nspath_eval('ows:ElectronicMailAddress',
             self.context.namespaces)).text = \
             metadata_main.get('contact_email', 'missing')
 
             url = etree.SubElement(contactinfo,
-            util.nspath_eval('ows2:OnlineResource', self.context.namespaces))
+            util.nspath_eval('ows:OnlineResource', self.context.namespaces))
 
             url.attrib[util.nspath_eval('xlink:type',
             self.context.namespaces)] = 'simple'
@@ -760,39 +761,39 @@ class Csw(object):
             metadata_main.get('contact_url', 'missing')
 
             etree.SubElement(contactinfo,
-            util.nspath_eval('ows2:HoursOfService',
+            util.nspath_eval('ows:HoursOfService',
             self.context.namespaces)).text = \
             metadata_main.get('contact_hours', 'missing')
 
             etree.SubElement(contactinfo,
-            util.nspath_eval('ows2:ContactInstructions',
+            util.nspath_eval('ows:ContactInstructions',
             self.context.namespaces)).text = \
             metadata_main.get('contact_instructions', 'missing')
 
             etree.SubElement(servicecontact,
-            util.nspath_eval('ows2:Role', self.context.namespaces),
+            util.nspath_eval('ows:Role', self.context.namespaces),
             codeSpace='ISOTC211/19115').text = \
             metadata_main.get('contact_role', 'missing')
 
         if operationsmetadata:
             LOGGER.debug('Writing section OperationsMetadata.')
             operationsmetadata = etree.SubElement(node,
-            util.nspath_eval('ows2:OperationsMetadata',
+            util.nspath_eval('ows:OperationsMetadata',
             self.context.namespaces))
 
             for operation in self.context.model['operations'].keys():
                 oper = etree.SubElement(operationsmetadata,
-                util.nspath_eval('ows2:Operation', self.context.namespaces),
+                util.nspath_eval('ows:Operation', self.context.namespaces),
                 name=operation)
 
-                dcp = etree.SubElement(oper, util.nspath_eval('ows2:DCP',
+                dcp = etree.SubElement(oper, util.nspath_eval('ows:DCP',
                 self.context.namespaces))
 
-                http = etree.SubElement(dcp, util.nspath_eval('ows2:HTTP',
+                http = etree.SubElement(dcp, util.nspath_eval('ows:HTTP',
                 self.context.namespaces))
 
                 if self.context.model['operations'][operation]['methods']['get']:
-                    get = etree.SubElement(http, util.nspath_eval('ows2:Get',
+                    get = etree.SubElement(http, util.nspath_eval('ows:Get',
                     self.context.namespaces))
 
                     get.attrib[util.nspath_eval('xlink:type',\
@@ -802,7 +803,7 @@ class Csw(object):
                     self.context.namespaces)] = self.config.get('server', 'url')
 
                 if self.context.model['operations'][operation]['methods']['post']:
-                    post = etree.SubElement(http, util.nspath_eval('ows2:Post',
+                    post = etree.SubElement(http, util.nspath_eval('ows:Post',
                     self.context.namespaces))
                     post.attrib[util.nspath_eval('xlink:type',
                     self.context.namespaces)] = 'simple'
@@ -813,60 +814,60 @@ class Csw(object):
                 for parameter in \
                 self.context.model['operations'][operation]['parameters']:
                     param = etree.SubElement(oper,
-                    util.nspath_eval('ows2:Parameter',
+                    util.nspath_eval('ows:Parameter',
                     self.context.namespaces), name=parameter)
 
                     allowedvalues = etree.SubElement(param,
-                    util.nspath_eval('ows2:AllowedValues',
+                    util.nspath_eval('ows:AllowedValues',
                     self.context.namespaces))
 
                     for val in \
                     self.context.model['operations'][operation]\
                     ['parameters'][parameter]['values']:
                         etree.SubElement(allowedvalues,
-                        util.nspath_eval('ows2:Value',
+                        util.nspath_eval('ows:Value',
                         self.context.namespaces)).text = val
 
                 if operation == 'GetRecords':  # advertise queryables
                     for qbl in self.repository.queryables.keys():
                         if qbl != '_all':
                             param = etree.SubElement(oper,
-                            util.nspath_eval('ows2:Constraint',
+                            util.nspath_eval('ows:Constraint',
                             self.context.namespaces), name=qbl)
 
                             for qbl2 in self.repository.queryables[qbl]:
                                 etree.SubElement(param,
-                                util.nspath_eval('ows2:Value',
+                                util.nspath_eval('ows:Value',
                                 self.context.namespaces)).text = qbl2
 
                     if self.profiles is not None:
                         for con in self.context.model[\
                         'operations']['GetRecords']['constraints'].keys():
                             param = etree.SubElement(oper,
-                            util.nspath_eval('ows2:Constraint',
+                            util.nspath_eval('ows:Constraint',
                             self.context.namespaces), name = con)
                             for val in self.context.model['operations']\
                             ['GetRecords']['constraints'][con]['values']:
                                 etree.SubElement(param,
-                                util.nspath_eval('ows2:Value',
+                                util.nspath_eval('ows:Value',
                                 self.context.namespaces)).text = val
 
             for parameter in self.context.model['parameters'].keys():
                 param = etree.SubElement(operationsmetadata,
-                util.nspath_eval('ows2:Parameter', self.context.namespaces),
+                util.nspath_eval('ows:Parameter', self.context.namespaces),
                 name=parameter)
 
                 for val in self.context.model['parameters'][parameter]['values']:
-                    etree.SubElement(param, util.nspath_eval('ows2:Value',
+                    etree.SubElement(param, util.nspath_eval('ows:Value',
                     self.context.namespaces)).text = val
 
             for constraint in self.context.model['constraints'].keys():
                 param = etree.SubElement(operationsmetadata,
-                util.nspath_eval('ows2:Constraint', self.context.namespaces),
+                util.nspath_eval('ows:Constraint', self.context.namespaces),
                 name=constraint)
 
                 for val in self.context.model['constraints'][constraint]['values']:
-                    etree.SubElement(param, util.nspath_eval('ows2:Value',
+                    etree.SubElement(param, util.nspath_eval('ows:Value',
                     self.context.namespaces)).text = val
 
             if self.profiles is not None:
@@ -1821,7 +1822,7 @@ class Csw(object):
         if tmp is not None:
             request['version'] = tmp
 
-        tmp = doc.find('.//%s' % util.nspath_eval('ows2:Version',
+        tmp = doc.find('.//%s' % util.nspath_eval('ows:Version',
         self.context.namespaces))
 
         if tmp is not None:
@@ -1833,11 +1834,11 @@ class Csw(object):
 
         # GetCapabilities
         if request['request'] == 'GetCapabilities':
-            tmp = doc.find(util.nspath_eval('ows2:Sections',
+            tmp = doc.find(util.nspath_eval('ows:Sections',
                   self.context.namespaces))
             if tmp is not None:
                 request['sections'] = ','.join([section.text for section in \
-                doc.findall(util.nspath_eval('ows2:Sections/ows2:Section',
+                doc.findall(util.nspath_eval('ows:Sections/ows:Section',
                 self.context.namespaces))])
 
         # GetDomain
@@ -2158,7 +2159,7 @@ class Csw(object):
                         etree.SubElement(record,
                         util.nspath_eval(i, self.context.namespaces)).text = val
 
-            # always write out ows2:BoundingBox
+            # always write out ows:BoundingBox
             bboxel = write_boundingbox(getattr(recobj,
             self.context.md_core_model['mappings']['pycsw:BoundingBox']),
             self.context.namespaces)
@@ -2358,7 +2359,7 @@ class Csw(object):
         if self.requesttype == 'POST':
             node1.append(etree.fromstring(self.request))
         else:  # GET
-            node2 = etree.SubElement(node1, util.nspath_eval('ows2:Get',
+            node2 = etree.SubElement(node1, util.nspath_eval('ows:Get',
                     self.context.namespaces))
 
             node2.text = self.request
@@ -2437,7 +2438,7 @@ class Csw(object):
         return insertresult
 
 def write_boundingbox(bbox, nsmap):
-    ''' Generate ows2:BoundingBox '''
+    ''' Generate ows:BoundingBox '''
 
     if bbox is not None:
         if bbox.find('SRID') != -1:  # it's EWKT; chop off 'SRID=\d+;'
@@ -2447,14 +2448,14 @@ def write_boundingbox(bbox, nsmap):
         bbox2 = tmp.envelope.bounds
 
         if len(bbox2) == 4:
-            boundingbox = etree.Element(util.nspath_eval('ows2:BoundingBox',
+            boundingbox = etree.Element(util.nspath_eval('ows:BoundingBox',
             nsmap), crs='urn:x-fes:def:crs:EPSG:6.11:4326',
             dimensions='2')
 
-            etree.SubElement(boundingbox, util.nspath_eval('ows2:LowerCorner',
+            etree.SubElement(boundingbox, util.nspath_eval('ows:LowerCorner',
             nsmap)).text = '%s %s' % (bbox2[1], bbox2[0])
 
-            etree.SubElement(boundingbox, util.nspath_eval('ows2:UpperCorner',
+            etree.SubElement(boundingbox, util.nspath_eval('ows:UpperCorner',
             nsmap)).text = '%s %s' % (bbox2[3], bbox2[2])
 
             return boundingbox
