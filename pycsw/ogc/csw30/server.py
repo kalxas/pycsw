@@ -484,12 +484,11 @@ class Csw(object):
                     self.context.model['operations'].keys():
                     error = 1
                     locator = 'request'
+                    code = 'OperationNotSupported'
                     if self.kvp['request'] in ['Transaction','Harvest']:
-                        code = 'OperationNotSupported'
                         text = '%s operations are not supported' % \
                         self.kvp['request']
                     else:
-                        code = 'InvalidParameterValue'
                         text = 'Invalid value for request: %s' % \
                         self.kvp['request']
 
