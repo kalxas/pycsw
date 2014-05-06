@@ -86,12 +86,13 @@ class OpenSearch(object):
 def kvp2filterxml(kvp, context):
     filter_xml = ""
     valid_xml = ""
-    # Parse KVP 
+    # Parse KVP and detect which of the parameters exist 
 
     # Create FilterXML
 
     record = etree.Element(util.nspath_eval('ogc:Filter',
                  context.namespaces))
+    filter_xml = etree.tostring(record, pretty_print=True)
 
     # Validate the created XML
     try:
