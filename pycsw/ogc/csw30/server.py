@@ -940,10 +940,10 @@ class Csw(object):
     def getdomain(self):
         ''' Handle GetDomain request '''
         if ('parametername' not in self.kvp and
-            'propertyname' not in self.kvp):
+            'valuereference' not in self.kvp):
             return self.exceptionreport('MissingParameterValue',
             'parametername', 'Missing value. \
-            One of propertyname or parametername must be specified')
+            One of valuereference or parametername must be specified')
 
         node = etree.Element(util.nspath_eval('csw30:GetDomainResponse',
         self.context.namespaces), nsmap=self.context.namespaces)
@@ -979,8 +979,8 @@ class Csw(object):
                         self.context.namespaces)).text = val
 
         if 'valuereference' in self.kvp:
-            for pname in self.kvp['propertyname'].split(','):
-                LOGGER.debug('Parsing propertyname %s.' % pname)
+            for pname in self.kvp['valuereference'].split(','):
+                LOGGER.debug('Parsing valuereference %s.' % pname)
 
                 if pname.find('/') == 0:  # it's an XPath
                     pname2 = pname
@@ -1005,7 +1005,7 @@ class Csw(object):
                 util.nspath_eval('csw30:DomainValues', self.context.namespaces),
                 type=dvtype)
                 etree.SubElement(domainvalue,
-                util.nspath_eval('csw30:PropertyName',
+                util.nspath_eval('csw30:ValueReference',
                 self.context.namespaces)).text = pname
 
                 try:
@@ -1014,14 +1014,8 @@ class Csw(object):
                     domainquerytype %s.' % \
                     (pname2, dvtype, self.domainquerytype))
 
-                    count = False
-
-                    if (self.config.has_option('server', 'domaincounts') and
-                        self.config.get('server', 'domaincounts') == 'true'):
-                        count = True
-
                     results = self.repository.query_domain(
-                    pname2, dvtype, self.domainquerytype, count)
+                    pname2, dvtype, self.domainquerytype, True)
 
                     LOGGER.debug('Results: %s' % str(len(results)))
 
@@ -1045,13 +1039,11 @@ class Csw(object):
                             LOGGER.debug(str(result))
                             if (result is not None and
                                 result[0] is not None):  # drop null values
-                                if count:  # show counts
-                                    val = '%s (%s)' % (result[0], result[1])
-                                else:
-                                    val = result[0]
+                                val = result[0]
+                                count = str(result[1])
                                 etree.SubElement(listofvalues,
                                 util.nspath_eval('csw30:Value',
-                                self.context.namespaces)).text = val
+                                self.context.namespaces), count=count).text = val
                 except Exception, err:
                     LOGGER.debug('No results for propertyname %s: %s.' %
                     (pname2, str(err)))
