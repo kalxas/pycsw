@@ -2,6 +2,7 @@
 # =================================================================
 #
 # Authors: Tom Kralidis <tomkralidis@gmail.com>
+#          Angelos Tzotsos <tzotsos@gmail.com>
 #
 # Copyright (c) 2012 Tom Kralidis
 #
@@ -31,6 +32,7 @@
 from lxml import etree
 from pycsw import util
 
+
 class OpenSearch(object):
     """OpenSearch wrapper class"""
 
@@ -50,25 +52,37 @@ class OpenSearch(object):
 
         if util.xmltag_split(element.tag) == 'GetRecordsResponse':
 
-            startindex = int(element.xpath('//@nextRecord')[0]) - int(element.xpath('//@numberOfRecordsReturned')[0])
+            startindex = int(element.xpath('//@nextRecord')[0]) - int(
+                        element.xpath('//@numberOfRecordsReturned')[0])
             if startindex < 1:
                 startindex = 1
 
-            node = etree.Element(util.nspath_eval('atom:feed', self.context.namespaces), nsmap=self.namespaces)
-            etree.SubElement(node, util.nspath_eval('atom:id', self.context.namespaces)).text = cfg.get('server', 'url')
-            etree.SubElement(node, util.nspath_eval('atom:title', self.context.namespaces)).text = cfg.get('metadata:main', 'identification_title')
-            #etree.SubElement(node, util.nspath_eval('atom:updated', self.context.namespaces)).text = element.xpath('//@timestamp')[0]
+            node = etree.Element(util.nspath_eval('atom:feed',
+                       self.context.namespaces), nsmap=self.namespaces)
+            etree.SubElement(node, util.nspath_eval('atom:id',
+                       self.context.namespaces)).text = cfg.get('server', 'url')
+            etree.SubElement(node, util.nspath_eval('atom:title',
+                       self.context.namespaces)).text = cfg.get('metadata:main',
+                       'identification_title')
+            #etree.SubElement(node, util.nspath_eval('atom:updated',
+            #  self.context.namespaces)).text = element.xpath('//@timestamp')[0]
 
-            etree.SubElement(node, util.nspath_eval('opensearch:totalResults', self.context.namespaces)).text = element.xpath('//@numberOfRecordsMatched')[0]
-            etree.SubElement(node, util.nspath_eval('opensearch:startIndex', self.context.namespaces)).text = str(startindex)
-            etree.SubElement(node, util.nspath_eval('opensearch:itemsPerPage', self.context.namespaces)).text = element.xpath('//@numberOfRecordsReturned')[0]
+            etree.SubElement(node, util.nspath_eval('opensearch:totalResults',
+                        self.context.namespaces)).text = element.xpath(
+                        '//@numberOfRecordsMatched')[0]
+            etree.SubElement(node, util.nspath_eval('opensearch:startIndex',
+                        self.context.namespaces)).text = str(startindex)
+            etree.SubElement(node, util.nspath_eval('opensearch:itemsPerPage',
+                        self.context.namespaces)).text = element.xpath(
+                        '//@numberOfRecordsReturned')[0]
 
-            for rec in element.xpath('//atom:entry', namespaces=self.context.namespaces):
+            for rec in element.xpath('//atom:entry',
+                        namespaces=self.context.namespaces):
                 node.append(rec)
 
         return node
 
 
-def kvp2FilterXML(kvp):
+def kvp2filterxml(kvp):
     pass
 
