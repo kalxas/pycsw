@@ -158,11 +158,17 @@ def kvp2filterxml(kvp, context):
                 time_element.append(el)
                 el = etree.Element(util.nspath_eval('ogc:LowerBoundary',
                             context.namespaces))
-                el.text = time_list[0]
+                el2 = etree.Element(util.nspath_eval('ogc:Literal',
+                            context.namespaces))
+                el2.text = time_list[0]
+                el.append(el2)
                 time_element.append(el)
                 el = etree.Element(util.nspath_eval('ogc:UpperBoundary',
                             context.namespaces))
-                el.text = time_list[1]
+                el2 = etree.Element(util.nspath_eval('ogc:Literal',
+                            context.namespaces))
+                el2.text = time_list[1]
+                el.append(el2)
                 time_element.append(el)
             else:
                 # One of two is empty
