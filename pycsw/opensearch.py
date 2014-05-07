@@ -31,7 +31,9 @@
 
 from lxml import etree
 from pycsw import util
+import logger
 
+LOGGER = logging.getLogger(__name__)
 
 class OpenSearch(object):
     """OpenSearch wrapper class"""
@@ -90,14 +92,9 @@ def kvp2filterxml(kvp, context):
 
     # Count parameters
     par_count = 0
-    if 'q' in kvp:
-        par_count += 1
-    if 'timestart' in kvp:
-        par_count += 1
-    if 'timestop' in kvp:
-        par_count += 1
-    if 'bbox' in kvp:
-        par_count += 1
+    for p in ['q','bbox','timestart','timestop']:
+        if p in kvp:
+            par_count += 1
 
     # Create root element for FilterXML
     root = etree.Element(util.nspath_eval('ogc:Filter',
@@ -105,8 +102,7 @@ def kvp2filterxml(kvp, context):
 
     # bbox to FilterXML
     if 'bbox' in kvp:
-        box_str = kvp['bbox']
-        bbox_list = [x.strip() for x in box_str.split(',')]
+        bbox_list = [x.strip() for x in kvp['bbox'].split(',')]
         bbox_element = etree.Element(util.nspath_eval('ogc:BBOX',
                     context.namespaces))
         el = etree.Element(util.nspath_eval('ogc:PropertyName',
@@ -197,7 +193,7 @@ def kvp2filterxml(kvp, context):
 
     # Render etree to string XML
     filter_xml = etree.tostring(root, pretty_print=True)
-
+    LOGGER.debug('FilterXML from OpenSearch before validation: %s.' % filter_xml)
     # Validate the created XML
     try:
         schema = os.path.join(self.config.get('server', 'home'),
