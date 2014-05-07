@@ -139,7 +139,7 @@ def kvp2filterxml(kvp, context):
                     context.namespaces))
         el = etree.Element(util.nspath_eval('ogc:PropertyName',
                     context.namespaces))
-        el.text = csw:AnyText
+        el.text = 'csw:AnyText'
         anytext_element.append(el)
         el = etree.Element(util.nspath_eval('ogc:Literal',
                     context.namespaces))
@@ -150,10 +150,26 @@ def kvp2filterxml(kvp, context):
     if 'timestart' in kvp:
         timestart_element = etree.Element(util.nspath_eval('ogc:PropertyIsGreaterThanOrEqualTo',
                     context.namespaces))
+        el = etree.Element(util.nspath_eval('ogc:PropertyName',
+                    context.namespaces))
+        el.text = 'dc:date'
+        timestart_element.append(el)
+        el = etree.Element(util.nspath_eval('ogc:Literal',
+                    context.namespaces))
+        el.text = kvp['timestart'] #TODO:Format validation
+        timestart_element.append(el)
 
     if 'timestop' in kvp:
         timestop_element = etree.Element(util.nspath_eval('ogc:PropertyIsLessThanOrEqualTo',
                     context.namespaces))
+        el = etree.Element(util.nspath_eval('ogc:PropertyName',
+                    context.namespaces))
+        el.text = 'dc:date'
+        timestop_element.append(el)
+        el = etree.Element(util.nspath_eval('ogc:Literal',
+                    context.namespaces))
+        el.text = kvp['timestop'] #TODO:Format validation
+        timestop_element.append(el)
 
     if (par_count == 1):
         # Only one OpenSearch parameter exists
@@ -186,7 +202,6 @@ def kvp2filterxml(kvp, context):
     try:
         schema = os.path.join(self.config.get('server', 'home'),
                             'schemas', 'ogc', 'filter', '1.1.0', 'filter.xsd')
-                            self.kvp['constraint'])
         schema = etree.XMLSchema(file=schema)
         parser = etree.XMLParser(schema=schema)
         doc = etree.fromstring(filter_xml, parser)
