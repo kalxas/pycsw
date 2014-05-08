@@ -53,7 +53,6 @@ class StaticContext(object):
         self.namespaces = {
             'atom': 'http://www.w3.org/2005/Atom',
             'csw': 'http://www.opengis.net/cat/csw/3.0',
-            'csw30': 'http://www.opengis.net/cat/csw/3.0',
             'dc': 'http://purl.org/dc/elements/1.1/',
             'dct': 'http://purl.org/dc/terms/',
             'dif': 'http://gcmd.gsfc.nasa.gov/Aboutus/xml/dif/',
@@ -178,7 +177,7 @@ class StaticContext(object):
                             'values': ['application/xml', 'application/json']
                         },
                         'CONSTRAINTLANGUAGE': {
-                            'values': ['FILTER', 'CQL_TEXT']
+                            'values': ['http://www.opengis.net/fes/2.0', 'http://www.opengis.net/csw/3.0/cql']
                         },
                         'ElementSetName': {
                             'values': ['brief', 'summary', 'full']
@@ -230,11 +229,41 @@ class StaticContext(object):
                     'values': ['false']
                 },
             },
+            'service_constraints': {
+                'OpenSearch': 'TRUE',
+                'GetCapabilities-XML': 'TRUE',
+                'GetRecordById-XML': 'TRUE',
+                'GetRecords-Basic-XML': 'TRUE',
+                'GetRecords-Distributed-XML': 'TRUE',
+                'GetRecords-Distributed-KVP': 'TRUE',
+                'GetRecords-Async-XML': 'TRUE',
+                'GetRecords-Async-KVP': 'TRUE',
+                'GetDomain-XML': 'TRUE',
+                'GetDomain-KVP': 'TRUE',
+                'Transaction': 'TRUE',
+                'Harvest-Basic-XML': 'TRUE',
+                'Harvest-Basic-KVP': 'TRUE',
+                'Harvest-Async-XML': 'TRUE',
+                'Harvest-Async-KVP': 'TRUE',
+                'Harvest-Periodic-XML': 'TRUE',
+                'Harvest-Periodic-KVP': 'TRUE',
+                'Filter-CQL': 'TRUE',
+                'Filter-FES-XML': 'TRUE',
+                'Filter-FES-KVP': 'TRUE',
+                'Filter-FES-KVP-Advanced': 'TRUE',
+                'CSW-Response': 'TRUE',
+                'ATOM-response': 'TRUE',
+                'SupportedGMLVersions': 'TRUE',
+                'PostEncoding': 'TRUE',
+                'DefaultSortingAlgorithm': 'TRUE',
+                'CoreQueryables': 'TRUE',
+                'CoreSortables': 'TRUE'
+            },
             'typenames': {
                 'csw:Record': {
                     'outputschema': 'http://www.opengis.net/cat/csw/2.0.2',
                     'queryables': {
-                        'SupportedDublinCoreQueryables': {
+                        'CoreQueryables': {
                             # map Dublin Core queryables to core metadata model
                             'dc:title':
                             {'dbcol': self.md_core_model['mappings']['pycsw:Title']},
@@ -313,10 +342,10 @@ class StaticContext(object):
             'dc:relation': 'pycsw:Relation',
             'dc:rights': 'pycsw:AccessConstraints',
             'ows:BoundingBox': 'pycsw:BoundingBox',
-            'csw30:TemporalExtent': 'pycsw:TemporalExtent',
+            'csw:TemporalExtent': 'pycsw:TemporalExtent',
             'csw:AnyText': 'pycsw:AnyText',
         }
 
         for k, val in defaults.iteritems():
-            self.model['typenames']['csw:Record']['queryables']['SupportedDublinCoreQueryables'][k] = \
+            self.model['typenames']['csw:Record']['queryables']['CoreQueryables'][k] = \
                 {'dbcol': mappings['mappings'][val]}
