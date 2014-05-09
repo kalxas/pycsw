@@ -17,3 +17,4 @@ OpenSearch support is enabled by default.  HTTP requests must be specified with 
 This will return the Description document which can then be `autodiscovered <http://www.opensearch.org/Specifications/OpenSearch/1.1#Autodiscovery>`_.
 
 .. _`OGC OpenSearch Geo and Time Extensions 1.0`: http://www.opengeospatial.org/standards/opensearchgeo
+
