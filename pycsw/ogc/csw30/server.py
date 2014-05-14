@@ -40,7 +40,7 @@ from lxml import etree
 from pycsw.core.plugins.profiles import profile as pprofile
 import pycsw.core.plugins.outputschemas
 from pycsw.core import log, metadata, util
-from pycsw import sru, opensearch
+from pycsw.ogc import opensearch
 from pycsw.ogc.csw30 import config, fes
 import logging
 
@@ -61,7 +61,6 @@ class Csw(object):
 
         # Lazy load this when needed
         # (it will permanently update global cfg namespaces)
-        self.sruobj = None
         self.opensearchobj = None
 
         # init kvp
@@ -273,7 +272,7 @@ class Csw(object):
 
         else:  # load default repository
             self.orm = 'sqlalchemy'
-            from pycsw import repository
+            from pycsw.core import repository
             try:
                 self.repository = \
                 repository.Repository(self.config.get('repository', 'database'),
@@ -392,13 +391,6 @@ class Csw(object):
 
         return self.opensearchobj
 
-    def sru(self):
-        ''' enable SRU '''
-        if not self.sruobj:
-            self.sruobj = sru.Sru(self.context)
-
-        return self.sruobj
-
     def dispatch(self, writer=sys.stdout, write_headers=True):
         ''' Handle incoming HTTP request '''
 
@@ -416,12 +408,6 @@ class Csw(object):
 
         LOGGER.debug('HTTP Headers:\n%s.' % self.environ)
         LOGGER.debug('Parsed request parameters: %s' % self.kvp)
-
-        if (not isinstance(self.kvp, str) and
-        'mode' in self.kvp and self.kvp['mode'] == 'sru'):
-            self.mode = 'sru'
-            LOGGER.debug('SRU mode detected; processing request.')
-            self.kvp = self.sru().request_sru2csw(self.kvp)
 
         if (not isinstance(self.kvp, str) and
         'mode' in self.kvp and self.kvp['mode'] == 'opensearch'):
@@ -530,11 +516,7 @@ class Csw(object):
                 'request', 'Invalid request parameter: %s' %
                 self.kvp['request'])
 
-        if self.mode == 'sru':
-            LOGGER.debug('SRU mode detected; processing response.')
-            self.response = self.sru().response_csw2sru(self.response,
-                            self.environ)
-        elif self.mode == 'opensearch':
+        if self.mode == 'opensearch':
             LOGGER.debug('OpenSearch mode detected; processing response.')
             self.response = self.opensearch().response_csw2opensearch(
                             self.response, self.config)
