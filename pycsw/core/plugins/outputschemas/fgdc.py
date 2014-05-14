@@ -164,13 +164,12 @@ def write_record(recobj, esn, context, url=None):
 def write_extent(bbox):
     ''' Generate BBOX extent '''
     
-    from shapely.wkt import loads
-    
     if bbox is not None:
-        if bbox.find('SRID') != -1:  # it's EWKT; chop off 'SRID=\d+;'
-            bbox2 = loads(bbox.split(';')[-1]).envelope.bounds
-        else:
-            bbox2 = loads(bbox).envelope.bounds
+        try:
+            bbox2 = util.wkt2geom(bbox)
+        except:
+            return None
+
         spdom = etree.Element('spdom')
         bounding = etree.SubElement(spdom, 'bounding')
         etree.SubElement(bounding, 'westbc').text = str(bbox2[0])

@@ -37,7 +37,6 @@ import urlparse
 from cStringIO import StringIO
 from ConfigParser import SafeConfigParser
 from lxml import etree
-from shapely.wkt import loads
 from pycsw.core.plugins.profiles import profile as pprofile
 import pycsw.core.plugins.outputschemas
 from pycsw.core import log, metadata, util
@@ -2461,11 +2460,10 @@ def write_boundingbox(bbox, nsmap):
     ''' Generate ows:BoundingBox '''
 
     if bbox is not None:
-        if bbox.find('SRID') != -1:  # it's EWKT; chop off 'SRID=\d+;'
-            tmp = loads(bbox.split(';')[-1])
-        else:
-            tmp = loads(bbox)
-        bbox2 = tmp.envelope.bounds
+        try:
+            bbox2 = util.wkt2geom(bbox)
+        except:
+            return None
 
         if len(bbox2) == 4:
             boundingbox = etree.Element(util.nspath_eval('ows:BoundingBox',
