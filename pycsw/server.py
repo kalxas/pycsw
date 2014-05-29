@@ -38,9 +38,10 @@ from cStringIO import StringIO
 from ConfigParser import SafeConfigParser
 from lxml import etree
 from shapely.wkt import loads
-from pycsw.plugins.profiles import profile as pprofile
-import pycsw.plugins.outputschemas
-from pycsw import config, fes, log, metadata, util, sru, opensearch
+from pycsw.core.plugins.profiles import profile as pprofile
+import pycsw.core.plugins.outputschemas
+from pycsw.core import config, log, metadata, util
+#from pycsw import config, fes, log, metadata, util, sru, opensearch
 import logging
 
 LOGGER = logging.getLogger(__name__)
@@ -197,7 +198,7 @@ class Csw(object):
 
         if self.config.has_option('server', 'profiles'):
             self.profiles = pprofile.load_profiles(
-            os.path.join('pycsw', 'plugins', 'profiles'),
+            os.path.join('pycsw', 'core', 'plugins', 'profiles'),
             pprofile.Profile,
             self.config.get('server', 'profiles'))
 
@@ -217,8 +218,8 @@ class Csw(object):
         # load profiles
         LOGGER.debug('Loading outputschemas.')
 
-        for osch in pycsw.plugins.outputschemas.__all__:
-            mod = getattr(__import__('pycsw.plugins.outputschemas.%s' % osch).plugins.outputschemas, osch)
+        for osch in pycsw.core.plugins.outputschemas.__all__:
+            mod = getattr(__import__('pycsw.core.plugins.outputschemas.%s' % osch).core.plugins.outputschemas, osch)
             self.context.model['operations']['GetRecords']['parameters']['outputSchema']['values'].append(mod.NAMESPACE)
             self.context.model['operations']['GetRecordById']['parameters']['outputSchema']['values'].append(mod.NAMESPACE)
             if 'Harvest' in self.context.model['operations']:
@@ -242,7 +243,7 @@ class Csw(object):
             self.config.get('repository', 'source') == 'geonode'):
 
             # load geonode repository
-            from pycsw.plugins.repository.geonode import geonode_
+            from pycsw.core.plugins.repository.geonode import geonode_
 
             try:
                 self.repository = \
@@ -258,7 +259,7 @@ class Csw(object):
             self.config.get('repository', 'source') == 'odc'):
 
             # load odc repository
-            from pycsw.plugins.repository.odc import odc
+            from pycsw.core.plugins.repository.odc import odc
 
             try:
                 self.repository = \
@@ -272,7 +273,7 @@ class Csw(object):
 
         else:  # load default repository
             self.orm = 'sqlalchemy'
-            from pycsw import repository
+            from pycsw.core import repository
             try:
                 self.repository = \
                 repository.Repository(self.config.get('repository', 'database'),
