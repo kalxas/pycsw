@@ -56,11 +56,15 @@ from StringIO import StringIO
 import os
 import sys
 
-app_path = os.path.dirname(__file__)
+app_path = os.path.dirname(os.path.realpath(__file__))
+
+# Activate enviroment, assuming this is a source installation
+activate_this = os.path.realpath(os.path.join(app_path, '../..', 'bin/activate_this.py'))
+execfile(activate_this, dict(__file__=activate_this))
+
 sys.path.append(app_path)
 
 from pycsw import server
-
 
 def application(env, start_response):
     """WSGI wrapper"""
