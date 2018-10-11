@@ -215,7 +215,15 @@ class ElasticSearchRepository(object):
 
     def transpose_a_record(self, record):
 
-        result = MAPPING
+        result = {
+            'wkt_geometry': None,
+        }
+        if record.get('identifier', ''):
+            result['identifier'] = record['identifier']['identifier']
+
+        if record.get('resourceType'):
+            result['type'] = record.get('resourceType')
+
         lstTitles = record.get('titles', '')
         if lstTitles:
             primary_is_set = False
@@ -228,120 +236,81 @@ class ElasticSearchRepository(object):
                         primary_is_set = True
                     elif not result.get('alternateTitle'):
                         result['alternateTitle'] = title
+                        break
 
-        # lstCreators = record.get('creators', False)
-        # if lstCreators:
-        #     for crt in lstCreators:
-        #         creatorName = crt['creatorName']
-        #         if creatorName:
-        #             child = ET.SubElement(oai_dc, 'dc:creator')
-        #             child.text = creatorName
+        publisher = record.get('publisher', False)
+        if publisher:
+            result['publisher'] = publisher
 
-        # lstSubjects = record['subjects']
-        # if lstSubjects:
-        #     for sbj in lstSubjects:
-        #         subject = sbj['subject']
-        #         if subject:
-        #             # Add all subjects
-        #             child = ET.SubElement(oai_dc, 'dc:subject')
-        #             child.text = subject
+        lstContributors = record.get('contributors', False)
+        if lstContributors:
+            for cbt in lstContributors:
+                contributorName = cbt['contributorName']
+                if contributorName:
+                    result['contributor'] = contributorName
+                    break
 
-        # dc_date = get_dc_date(record)
-        # if dc_date is not None:
-        #     child = ET.SubElement(oai_dc, 'dc:date')
-        #     child.text = dc_date
+        lstCreators = record.get('creators', False)
+        if lstCreators:
+            # creators = []
+            # for crt in lstCreators:
+            #     creatorName = crt['creatorName']
+            #     if creatorName:
+            #         creators.append(creatorName)
+            # result['creator'] = ','.join(creators)
+            for crt in lstCreators:
+                creatorName = crt['creatorName']
+                if creatorName:
+                    result['creator'] = creatorName
+                    break
 
-        # if record.get('resourceType', '') != '':
-        #     child = ET.SubElement(oai_dc, 'dc:type', {
-        #         'xsi.type': "dct:DCMIType"})
-        #     child.text = record.get('resourceType')
+        lstSubjects = record['subjects']
+        if lstSubjects:
+            keywords = []
+            for sbj in lstSubjects:
+                subject = sbj['subject']
+                if subject:
+                    # Add all subjects
+                    keywords.append(subject)
+            result['keywords'] = ','.join(keywords)
 
-        # # # Not sure where to get the type URI
-        # # child = ET.SubElement(oai_dc, 'dc:identifier', {
-        # #     'xsi.type': "dct:URI"})
-        # # child.text = record['identifier']['identifier']
+        dc_date = get_dc_date(record)
+        if dc_date:
+            result['date'] = dc_date
 
-        # lstRights = record.get('rights', [])
-        # if len(lstRights):
-        #     for rgt in lstRights:
-        #         child = ET.SubElement(oai_dc, 'dc:rights')
-        #         child.text = rgt['rights']
+        lstRights = record.get('rights', [])
+        if len(lstRights):
+            rights = []
+            for rgt in lstRights:
+                rights.append(rgt['rights'])
+            result['accessconstraints'] = ','.join(rights)
 
-        # lstDescriptions = record['description']
-        # if lstDescriptions:
-        #     # descriptionType is empty but shows Abstract on the real xml
-        #     for dsp in lstDescriptions:
-        #         description = ET.SubElement(oai_dc, 'dc:description')
-        #         description.text = dsp['description']
+        lstDescriptions = record['description']
+        if lstDescriptions:
+            # descriptionType is empty but shows Abstract on the real xml
+            for desc in lstDescriptions:
+                if desc.get('descriptionType', '') in ['', 'abstract']:
+                    result['abstract'] = desc['description']
+                    break
 
         print(result)
         dataset = type('', (object,), result)()
         return dataset
 
 
-MAPPING = {
-    # 'pycsw:Identifier': '',
-    # # CSW typename (e.g. csw:Record, md:MD_Metadata)
-    # 'pycsw:Typename': 'typename',
-    # # schema namespace, i.e. http://www.isotc211.org/2005/gmd
-    # 'pycsw:Schema': 'schema',
-    # # origin of resource, either 'local', or URL to web service
-    # 'pycsw:MdSource': 'mdsource',
-    # # date of insertion
-    # 'pycsw:InsertDate': 'insert_date',  # date of insertion
-    # # raw XML metadata
-    # 'pycsw:XML': 'xml',
-    # # bag of metadata element and attributes ONLY, no XML tages
-    # 'pycsw:AnyText': 'anytext',
-    # 'pycsw:Language': 'language',
-    # 'pycsw:Title': 'title',
-    # 'pycsw:Abstract': 'abstract',
-    # 'pycsw:Keywords': 'keywords',
-    # 'pycsw:KeywordType': 'keywordstype',
-    # 'pycsw:Format': 'format',
-    # 'pycsw:Source': 'source',
-    # 'pycsw:Date': 'date',
-    # 'pycsw:Modified': 'date_modified',
-    # 'pycsw:Type': 'type',
-    # geometry, specified in OGC WKT
-    'wkt_geometry': None,
-    # 'pycsw:CRS': 'crs',
-    # 'pycsw:AlternateTitle': 'title_alternate',
-    # 'pycsw:RevisionDate': 'date_revision',
-    # 'pycsw:CreationDate': 'date_creation',
-    # 'pycsw:PublicationDate': 'date_publication',
-    # 'pycsw:OrganizationName': 'organization',
-    # 'pycsw:SecurityConstraints': 'securityconstraints',
-    # 'pycsw:ParentIdentifier': 'parentidentifier',
-    # 'pycsw:TopicCategory': 'topicategory',
-    # 'pycsw:ResourceLanguage': 'resourcelanguage',
-    # 'pycsw:GeographicDescriptionCode': 'geodescode',
-    # 'pycsw:Denominator': 'denominator',
-    # 'pycsw:DistanceValue': 'distancevalue',
-    # 'pycsw:DistanceUOM': 'distanceuom',
-    # 'pycsw:TempExtent_begin': 'time_begin',
-    # 'pycsw:TempExtent_end': 'time_end',
-    # 'pycsw:ServiceType': 'servicetype',
-    # 'pycsw:ServiceTypeVersion': 'servicetypeversion',
-    # 'pycsw:Operation': 'operation',
-    # 'pycsw:CouplingType': 'couplingtype',
-    # 'pycsw:OperatesOn': 'operateson',
-    # 'pycsw:OperatesOnIdentifier': 'operatesonidentifier',
-    # 'pycsw:OperatesOnName': 'operatesoname',
-    # 'pycsw:Degree': 'degree',
-    # 'pycsw:AccessConstraints': 'accessconstraints',
-    # 'pycsw:OtherConstraints': 'otherconstraints',
-    # 'pycsw:Classification': 'classification',
-    # 'pycsw:ConditionApplyingToAccessAndUse': 'conditionapplyingtoaccessanduse',
-    # 'pycsw:Lineage': 'lineage',
-    # 'pycsw:ResponsiblePartyRole': 'responsiblepartyrole',
-    # 'pycsw:SpecificationTitle': 'specificationtitle',
-    # 'pycsw:SpecificationDate': 'specificationdate',
-    # 'pycsw:SpecificationDateType': 'specificationdatetype',
-    # 'pycsw:Creator': 'creator',
-    # 'pycsw:Publisher': 'publisher',
-    # 'pycsw:Contributor': 'contributor',
-    # 'pycsw:Relation': 'relation',
-    # # links: format "name,description,protocol,url[^,,,[^,,,]]"
-    # 'pycsw:Links': 'links',
-}
+def get_dc_date(record):
+    dates = record.get('dates', [])
+    dc_date = None
+    for adate in dates:
+        if adate.get('dateType') and \
+           adate.get('dateType') == 'Submitted' and \
+           adate.get('date'):
+            dc_date = adate.get('date')
+            break
+
+    if dc_date is None:
+        year = record.get('publicationYear')
+        if year:
+            dc_date = year
+
+    return dc_date
