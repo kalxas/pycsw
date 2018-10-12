@@ -78,12 +78,6 @@ class ElasticSearchRepository(object):
         if not self.elastic_available(self.filter):
             raise Exception('ElasticSearch backend not available')
 
-    # def dataset(self):
-    #     """
-    #     Stub to mock a pycsw dataset object for Transactions
-    #     """
-    #     return type('Service', (object,), {})
-
     def query_ids(self, ids):
         """
         Query by list of identifiers
@@ -126,7 +120,7 @@ class ElasticSearchRepository(object):
         # run the raw query and get total
         # we want to exclude layers which are not valid, as it is done in the search engine
         query = self._get_repo_filter(constraint)
-        results = self._run_es_query(query)
+        results = self._run_es_query(self.filter, query)
         print(str(results))
         return results
 
@@ -157,42 +151,48 @@ class ElasticSearchRepository(object):
         """
         Apply repository wide side filter / mask query
         """
-        query = self.filter
+        query = {}
         if constraint:
-            query = '{}/{}'.format(constraint)
+            query = '{}'.format(constraint)
         return query
 
-    def _run_es_query(self, query):
+    def _run_es_query(self, base_url, params):
 
         try:
-            url = "{}/search?index=md_index_1".format(query)
-            response = requests.get(url=url)
+            params['index'] = 'md_index_1'
+            print(str(params))
+            response = requests.post(url=base_url, params=params)
         except requests.exceptions.ConnectionError as e:
             LOGGER.error('ConnectError connecting to Elastic search backend: {}'.format(e))
-            return [0, []]
+            return ['0', []]
         except Exception as e:
             LOGGER.error('Elastic search backend error: {}'.format(e))
-            return 'Elastic search backend error: {}'.format(e)
+            return ['0', []]
 
         if response.status_code != 200:
-            raise RuntimeError('Request failed with return code: %s' % (
+            LOGGER.error('Request failed with return code: %s' % (
                 response.status_code))
+            return ['0', []]
 
         try:
             json_dict = json.loads(response.text)
         except Exception as e:
-            raise RuntimeError('response is not valid json: {}'.format(e))
+            LOGGER.error('Response is not valid json: {}'.format(e))
+            return ['0', []]
 
         if not json_dict.get('success', False):
-            raise RuntimeError('response success is false')
+            LOGGER.error('Backend request was unsuccess')
+            return ['0', []]
         if not json_dict.get('results', False):
-            raise RuntimeError('response has no results')
+            LOGGER.error('Backend returned no results')
+            return ['0', []]
+
         results = self.transpose_records(json_dict['results'])
         return [str(len(results)), results]
 
     def elastic_available(self, url):
         try:
-            response = requests.get(url="{}/read".format(url))
+            response = requests.get(url="{}".format(url))
         except Exception as e:
             LOGGER.error('ConnectError connecting to ElasticSearch backend: {}'.format(e))
             return False
@@ -292,6 +292,14 @@ class ElasticSearchRepository(object):
                 if desc.get('descriptionType', '') in ['', 'abstract']:
                     result['abstract'] = desc['description']
                     break
+
+        # TODO OUSTANDING FIELDS
+        # boundingbox
+        # modified
+        # source
+        # language
+        # format
+        # references
 
         print(result)
         dataset = type('', (object,), result)()
