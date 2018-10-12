@@ -20,6 +20,9 @@ tests/results
 # pycharm ide
 .idea
 
+# vim
+.swp
+
 # shell files
 .env
 .envrc
