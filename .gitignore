@@ -21,7 +21,7 @@ tests/results
 .idea
 
 # vim
-.swp
+*.swp
 
 # shell files
 .env
