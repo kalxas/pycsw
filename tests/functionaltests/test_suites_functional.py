@@ -291,7 +291,7 @@ def _normalize(sresult, normalize_identifiers=False):
     # XML responses
     version = re.search(r'<!-- (.*) -->', sresult)
     updatesequence = re.search(r'updateSequence="(\S+)"', sresult)
-    timestamp = re.search(r'timestamp="(.*)"', sresult)
+    timestamp = re.search(r'timestamp="(\S+)"', sresult)
     timestamp2 = re.search(r'timeStamp="(.*)"', sresult)
     timestamp3 = re.search(
         r'<oai:responseDate>(.*)</oai:responseDate>',
