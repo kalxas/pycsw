@@ -1,1 +1,2 @@
 GetCapabilities,service=CSW&version=2.0.2&request=GetCapabilities
+GetRecords-all,service=CSW&version=2.0.2&request=GetRecords&typenames=csw:Record&elementsetname=brief&resulttype=results
