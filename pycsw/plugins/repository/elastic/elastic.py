@@ -120,6 +120,7 @@ class ElasticSearchRepository(object):
         # run the raw query and get total
         # we want to exclude layers which are not valid, as it is done in the search engine
         query = self._get_repo_filter(constraint)
+        print(str(query))
         results = self._run_es_query(self.filter, query)
         print(str(results))
         return results
@@ -153,7 +154,20 @@ class ElasticSearchRepository(object):
         """
         query = {}
         if constraint:
-            query = '{}'.format(constraint)
+            if constraint.get('type') == 'filter':
+                field = None
+                value = None
+                where = constraint.get('where')
+                where_lst = where.split(' ')
+                if where_lst[0] == 'title':
+                    field = 'metadata_json.titles.title'
+                values = constraint.get('values')
+                if len(values) > 0:
+                    value = values[0]
+                    value = value.replace('%', '')
+                if field and value:
+                    query = {field: value}
+
         return query
 
     def _run_es_query(self, base_url, params):
