@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 # =================================================================
 #
-# Authors: Mike Metcalfe <mikejmets@gmail.com>
+# Authors: Mike Metcalfe <mike@webtide.co.za>
 # Credit: Base on the pycsw hypermap plugin that was
 #         written by Tom Kralidis <tomkralidis@gmail.com>
 #         https://github.com/cga-harvard/Hypermap-Registry 
 #
-# Copyright (c) 2015 Mike Metcalfe
+# Copyright (c) 2018 Mike Metcalfe
 #
 # Permission is hereby granted, free of charge, to any person
 # obtaining a copy of this software and associated documentation

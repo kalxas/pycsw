@@ -125,6 +125,7 @@ class ElasticSearchRepository(object):
         print(str(results))
         return results
 
+        # TODO
         # total = query.count()
         # # apply sorting, limit and offset
         # if sortby is not None:
@@ -159,14 +160,19 @@ class ElasticSearchRepository(object):
                 value = None
                 where = constraint.get('where')
                 where_lst = where.split(' ')
+                print('where_lst: {}'.format(where_lst))
                 if where_lst[0] == 'title':
                     field = 'metadata_json.titles.title'
+                elif where_lst[0] == 'keywords':
+                    field = 'metadata_json.subjects.subject'
                 values = constraint.get('values')
                 if len(values) > 0:
                     value = values[0]
                     value = value.replace('%', '')
                 if field and value:
                     query = {field: value}
+                else:
+                    query = {'wtf': 'wtf'}
 
         return query
 
@@ -230,19 +236,20 @@ class ElasticSearchRepository(object):
     def transpose_a_record(self, record):
 
         result = {
+            'type': 'service',
             'wkt_geometry': None,
         }
-        if record.get('identifier', ''):
+        if record.get('identifier', False):
             result['identifier'] = record['identifier']['identifier']
 
-        if record.get('resourceType'):
+        if False:  # record.get('resourceType', False):
             result['type'] = record.get('resourceType')
 
-        lstTitles = record.get('titles', '')
+        lstTitles = record.get('titles', False)
         if lstTitles:
             primary_is_set = False
             for ttl in lstTitles:
-                title = ttl['title']
+                title = ttl.get('title')
                 if title:
                     if not primary_is_set:
                         # Use the first title
@@ -251,7 +258,6 @@ class ElasticSearchRepository(object):
                     elif not result.get('alternateTitle'):
                         result['alternateTitle'] = title
                         break
-
         publisher = record.get('publisher', False)
         if publisher:
             result['publisher'] = publisher
@@ -278,7 +284,7 @@ class ElasticSearchRepository(object):
                     result['creator'] = creatorName
                     break
 
-        lstSubjects = record['subjects']
+        lstSubjects = record.get('subjects', False)
         if lstSubjects:
             keywords = []
             for sbj in lstSubjects:
@@ -292,14 +298,14 @@ class ElasticSearchRepository(object):
         if dc_date:
             result['date'] = dc_date
 
-        lstRights = record.get('rights', [])
-        if len(lstRights):
+        lstRights = record.get('rights', False)
+        if lstRights:
             rights = []
             for rgt in lstRights:
                 rights.append(rgt['rights'])
             result['accessconstraints'] = ','.join(rights)
 
-        lstDescriptions = record['description']
+        lstDescriptions = record.get('description', False)
         if lstDescriptions:
             # descriptionType is empty but shows Abstract on the real xml
             for desc in lstDescriptions:
@@ -307,9 +313,15 @@ class ElasticSearchRepository(object):
                     result['abstract'] = desc['description']
                     break
 
+        lstDates = record.get('dates', False)
+        if lstDates:
+            for adate in lstDates:
+                if adate.get('dateType', '') in ['Updated']:
+                    result['date_modified'] = adate['date']
+                    break
+
         # TODO OUSTANDING FIELDS
         # boundingbox
-        # modified
         # source
         # language
         # format
