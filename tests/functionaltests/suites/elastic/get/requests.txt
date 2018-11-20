@@ -1,3 +1,5 @@
 GetCapabilities,service=CSW&version=2.0.2&request=GetCapabilities
-GetRecords-all,service=CSW&version=2.0.2&request=GetRecords&typenames=csw:Record&elementsetname=brief&resulttype=results
-GetRecords-filter-cql-title,service=CSW&version=2.0.2&request=GetRecords&typenames=csw:Record&elementsetname=full&resulttype=results&constraintlanguage=CQL_TEXT&constraint=dc%3Atitle%20like%20%27%25SOIL%25%27
+GetRecords-all-brief,service=CSW&version=2.0.2&request=GetRecords&typenames=csw:Record&elementsetname=brief&resulttype=results
+GetRecords-all-summary,service=CSW&version=2.0.2&request=GetRecords&typenames=csw:Record&elementsetname=summary&resulttype=results
+GetRecords-all-full,service=CSW&version=2.0.2&request=GetRecords&typenames=csw:Record&elementsetname=full&resulttype=results
+GetRecords-filter-cql-title,service=CSW&version=2.0.2&request=GetRecords&typenames=csw:Record&elementsetname=full&resulttype=results&constraintlanguage=CQL_TEXT&constraint=dc%3Atitle%20like%20%27%25Second%25%27
