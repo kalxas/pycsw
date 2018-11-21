@@ -83,12 +83,10 @@ class ElasticSearchRepository(object):
         Query by list of identifiers
         """
 
-        results = self._get_repo_filter(Layer.objects).filter(uuid__in=ids).all()
+        query = {'metadata_json.identifier.identifier': ids}
+        results = self._run_es_query(self.filter, query)
 
-        if len(results) == 0:  # try services
-            results = self._get_repo_filter(Service.objects).filter(uuid__in=ids).all()
-
-        return results
+        return results[1]
 
     def query_domain(self, domain, typenames, domainquerytype='list', count=False):
         """
@@ -110,7 +108,7 @@ class ElasticSearchRepository(object):
         """
         Query by source
         """
-        return self._get_repo_filter(Layer.objects).filter(url=source)
+        return self._get_repo_filter().filter(url=source)
 
     def query(self, constraint, sortby=None, typenames=None, maxrecords=10, startposition=0):
         """
@@ -149,7 +147,7 @@ class ElasticSearchRepository(object):
         # else:  # no sort
         #     return [str(total), query.all()[startposition:startposition + int(maxrecords)]]
 
-    def _get_repo_filter(self, constraint):
+    def _get_repo_filter(self, constraint=None):
         """
         Apply repository wide side filter / mask query
         """
@@ -272,12 +270,6 @@ class ElasticSearchRepository(object):
 
         lstCreators = record.get('creators', False)
         if lstCreators:
-            # creators = []
-            # for crt in lstCreators:
-            #     creatorName = crt['creatorName']
-            #     if creatorName:
-            #         creators.append(creatorName)
-            # result['creator'] = ','.join(creators)
             for crt in lstCreators:
                 creatorName = crt['creatorName']
                 if creatorName:
@@ -320,12 +312,31 @@ class ElasticSearchRepository(object):
                     result['date_modified'] = adate['date']
                     break
 
+        language = record.get('language', False)
+        if language:
+            result['language'] = language
+
+        lstFormats = record.get('formats', False)
+        if lstFormats:
+            # Assume first is correct
+            if lstFormats[0].get('format', False):
+                result['format'] = lstFormats[0].get('format')
+
+        asource = record.get('immutableResource', False)
+        if asource:
+            if asource.get('resourceURL', False):
+                result['source'] = asource.get('resourceURL')
+
+        lstGeoLocations = record.get('geoLocations', False)
+        if lstGeoLocations:
+            for loc in lstGeoLocations:
+                if loc.get('geoLocationPolygons', False):
+                    # Assume first is correct
+                    result['wkt_geometry'] = loc['geoLocationPolygons'][0]
+                    break
+
         # TODO OUSTANDING FIELDS
-        # boundingbox
-        # source
-        # language
-        # format
-        # references
+        # anytext
 
         print(result)
         dataset = type('', (object,), result)()
