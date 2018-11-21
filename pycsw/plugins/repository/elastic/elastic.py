@@ -118,9 +118,7 @@ class ElasticSearchRepository(object):
         # run the raw query and get total
         # we want to exclude layers which are not valid, as it is done in the search engine
         query = self._get_repo_filter(constraint)
-        print(str(query))
         results = self._run_es_query(self.filter, query)
-        print(str(results))
         return results
 
         # TODO
@@ -338,8 +336,8 @@ class ElasticSearchRepository(object):
         # TODO OUSTANDING FIELDS
         # anytext
 
-        print(result)
         dataset = type('', (object,), result)()
+        print(str(dataset))
         return dataset
 
 
