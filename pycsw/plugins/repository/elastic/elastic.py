@@ -108,46 +108,32 @@ class ElasticSearchRepository(object):
         """
         Query by source
         """
-        return self._get_repo_filter().filter(url=source)
+        # return self._get_repo_filter().filter(url=source)
 
     def query(self, constraint, sortby=None, typenames=None, maxrecords=10, startposition=0):
         """
         Query records from underlying repository
         """
 
-        # run the raw query and get total
-        # we want to exclude layers which are not valid, as it is done in the search engine
-        query = self._get_repo_filter(constraint)
+        query = self._get_repo_filter(constraint, sortby, maxrecords, startposition)
+        if maxrecords:
+            # run the raw query and get total
+            tmp_query = dict(query)
+            tmp_query.pop('size')
+            results = self._run_es_query(self.filter, tmp_query)
+            record_set_size = int(results[0])
+
         results = self._run_es_query(self.filter, query)
+
+        if maxrecords:
+            # Adjust numberOfRecordsMatched
+            results[0] = str(record_set_size)
+
         return results
 
-        # TODO
-        # total = query.count()
-        # # apply sorting, limit and offset
-        # if sortby is not None:
-        #     if 'spatial' in sortby and sortby['spatial']:  # spatial sort
-        #         desc = False
-        #         if sortby['order'] == 'DESC':
-        #             desc = True
-        #         query = query.all()
-        #         return [str(total),
-        #                 sorted(query,
-        #                        key=lambda x: float(util.get_geometry_area(getattr(x, sortby['propertyname']))),
-        #                        reverse=desc,
-        #                        )[startposition:startposition + int(maxrecords)]]
-        #     else:
-        #         if sortby['order'] == 'DESC':
-        #             pname = '-%s' % sortby['propertyname']
-        #         else:
-        #             pname = sortby['propertyname']
-        #         return [str(total),
-        #                 query.order_by(pname)[startposition:startposition + int(maxrecords)]]
-        # else:  # no sort
-        #     return [str(total), query.all()[startposition:startposition + int(maxrecords)]]
-
-    def _get_repo_filter(self, constraint=None):
+    def _get_repo_filter(self, constraint=None, sortby=None, maxrecords=10, startposition=0):
         """
-        Apply repository wide side filter / mask query
+        Construct an ES query params from the pyCSW constraints
         """
         query = {}
         if constraint:
@@ -169,6 +155,36 @@ class ElasticSearchRepository(object):
                     query = {field: value}
                 else:
                     query = {'wtf': 'wtf'}
+            elif constraint.get('type') == 'cql_text':
+                # TODO
+                pass
+
+        # Reset startposition if below zero
+        if startposition < 0:
+            startposition = 0
+
+        if startposition:
+            print('startposition: {}'.format(startposition))
+            query['start'] = startposition + 1
+
+        if sortby:
+            print('sortby: {}'.format(sortby))
+            if sortby.get('propertyname', False):
+                if sortby['propertyname'] == 'identifier':
+                    query['sort'] = 'metadata_json.identifier.identifier'
+                elif sortby['propertyname'] == 'title':
+                    query['sort'] = 'metadata_json.titles.title'
+                else:
+                    query['sort'] = 'metadata_json.{}'.format(sortby['propertyname'])
+            if sortby.get('order') == 'DESC':
+                query['sortorder'] = sortby.get('order')
+        else:
+            query['sort'] = 'metadata_json.identifier.identifier'
+            query['sortorder'] = 'ASC'
+
+        if maxrecords:
+            print('maxrecords: {}'.format(maxrecords))
+            query['size'] = maxrecords
 
         return query
 

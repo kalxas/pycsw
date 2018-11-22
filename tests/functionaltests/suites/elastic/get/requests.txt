@@ -3,4 +3,9 @@ GetRecords-all-brief,service=CSW&version=2.0.2&request=GetRecords&typenames=csw:
 GetRecords-all-summary,service=CSW&version=2.0.2&request=GetRecords&typenames=csw:Record&elementsetname=summary&resulttype=results
 GetRecords-all-full,service=CSW&version=2.0.2&request=GetRecords&typenames=csw:Record&elementsetname=full&resulttype=results
 GetRecords-filter-cql-title,service=CSW&version=2.0.2&request=GetRecords&typenames=csw:Record&elementsetname=full&resulttype=results&constraintlanguage=CQL_TEXT&constraint=dc%3Atitle%20like%20%27%25Second%25%27
-GetRecordById-brief,service=CSW&version=2.0.2&request=GetRecordById&elementsetname=brief&id=12.02010
+GetRecordById-brief,service=CSW&version=2.0.2&request=GetRecordById&elementsetname=brief&id=12.02010.1
+GetRecordById-brief-fail,service=CSW&version=2.0.2&request=GetRecordById&elementsetname=brief&id=12.02010
+GetRecords-sorta,service=CSW&version=2.0.2&request=GetRecords&typenames=csw:Record&elementsetname=brief&resulttype=results&SortBy=dc:identifier:A
+GetRecords-sortd,service=CSW&version=2.0.2&request=GetRecords&typenames=csw:Record&elementsetname=brief&resulttype=results&SortBy=dc:identifier:D
+GetRecords-max-1,service=CSW&version=2.0.2&request=GetRecords&typenames=csw:Record&elementsetname=brief&resulttype=results&maxrecords=1
+GetRecords-max-2,service=CSW&version=2.0.2&request=GetRecords&typenames=csw:Record&elementsetname=brief&resulttype=results&maxrecords=2
