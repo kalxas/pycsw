@@ -174,13 +174,11 @@ class ElasticSearchRepository(object):
                     query['sort'] = 'metadata_json.identifier.identifier'
                 elif sortby['propertyname'] == 'title':
                     query['sort'] = 'metadata_json.titles.title'
+                elif sortby['propertyname'] == 'keywords':
+                    query['sort'] = 'metadata_json.subjects.subject'
                 else:
                     query['sort'] = 'metadata_json.{}'.format(sortby['propertyname'])
-            if sortby.get('order') == 'DESC':
-                query['sortorder'] = sortby.get('order')
-        else:
-            query['sort'] = 'metadata_json.identifier.identifier'
-            query['sortorder'] = 'ASC'
+                query['sortorder'] = sortby.get('order').lower()
 
         if maxrecords:
             print('maxrecords: {}'.format(maxrecords))
