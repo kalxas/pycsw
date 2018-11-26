@@ -180,6 +180,8 @@ class ElasticSearchRepository(object):
                     query['sort'] = 'metadata_json.creators.creatorName.raw'
                 elif sortby['propertyname'] == 'date_modified':
                     query['sort'] = 'metadata_json.dates.date.lte'
+                elif sortby['propertyname'] == 'publisher':
+                    query['sort'] = 'metadata_json.publisher.raw'
                 else:
                     query['sort'] = 'metadata_json.{}'.format(sortby['propertyname'])
                 query['sortorder'] = sortby.get('order').lower()
