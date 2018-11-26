@@ -175,7 +175,7 @@ class ElasticSearchRepository(object):
                 elif sortby['propertyname'] == 'title':
                     query['sort'] = 'metadata_json.titles.title'
                 elif sortby['propertyname'] == 'keywords':
-                    query['sort'] = 'metadata_json.subjects.subject'
+                    query['sort'] = 'metadata_json.subjects.subject.raw'
                 else:
                     query['sort'] = 'metadata_json.{}'.format(sortby['propertyname'])
                 query['sortorder'] = sortby.get('order').lower()
