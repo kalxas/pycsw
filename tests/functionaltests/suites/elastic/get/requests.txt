@@ -12,3 +12,4 @@ GetRecords-max-1,service=CSW&version=2.0.2&request=GetRecords&typenames=csw:Reco
 GetRecords-max-2,service=CSW&version=2.0.2&request=GetRecords&typenames=csw:Record&elementsetname=brief&resulttype=results&maxrecords=2&SortBy=dc:identifier:A
 GetRecords-sortd-keywords,service=CSW&version=2.0.2&request=GetRecords&typenames=csw:Record&elementsetname=summary&resulttype=results&SortBy=dc:subject:D
 GetRecords-sortd-creator,service=CSW&version=2.0.2&request=GetRecords&typenames=csw:Record&elementsetname=full&resulttype=results&SortBy=dc:creator:D
+GetRecords-sortd-modified,service=CSW&version=2.0.2&request=GetRecords&typenames=csw:Record&elementsetname=full&resulttype=results&SortBy=dct:modified:D
