@@ -132,11 +132,16 @@ class ElasticSearchRepository(object):
         return results
 
     def _parse_spatial_search(self, where):
-        field = None
-        value = None
+        field = 'wtf'
+        value = 'wtf'
         if 'ogc:Filter' not in where:
             return field, value
         afilter = where['ogc:Filter']
+        field = 'overlaps'
+        print(str(afilter))
+        if 'ogc:Not' in afilter:
+            field = 'excludes'
+            afilter = afilter['ogc:Not']
         if 'ogc:BBOX' not in afilter:
             return field, value
         bbox = afilter['ogc:BBOX']
@@ -146,7 +151,6 @@ class ElasticSearchRepository(object):
             return field, value
         # property_name = bbox['ogc:PropertyName']
         envelope = bbox['gml:Envelope']
-        field = 'overlaps'
         lower = envelope['gml:lowerCorner'].split()
         upper = envelope['gml:upperCorner'].split()
         values = '{},{},{},{}'.format(upper[1], lower[0], lower[1], upper[0])
