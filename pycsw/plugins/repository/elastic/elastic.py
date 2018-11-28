@@ -146,7 +146,7 @@ class ElasticSearchRepository(object):
             return field, value
         # property_name = bbox['ogc:PropertyName']
         envelope = bbox['gml:Envelope']
-        field = 'encloses'
+        field = 'overlaps'
         lower = envelope['gml:lowerCorner'].split()
         upper = envelope['gml:upperCorner'].split()
         values = '{},{},{},{}'.format(upper[1], lower[0], lower[1], upper[0])
