@@ -288,6 +288,8 @@ def _get_post_parameters(post_tests_dir, expected_tests_dir, config_path,
     # `harvesting` suite requires tests to be executed in alphabetical order
     directory_contents = sorted(os.listdir(post_tests_dir))
     for request_file_name in directory_contents:
+        if request_file_name.startswith('.'):
+            continue
         request_path = os.path.join(post_tests_dir,
                                     request_file_name)
         expected_result_path = os.path.join(
