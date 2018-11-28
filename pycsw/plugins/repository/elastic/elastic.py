@@ -131,6 +131,28 @@ class ElasticSearchRepository(object):
 
         return results
 
+    def _parse_spatial_search(self, where):
+        field = None
+        value = None
+        if 'ogc:Filter' not in where:
+            return field, value
+        afilter = where['ogc:Filter']
+        if 'ogc:BBOX' not in afilter:
+            return field, value
+        bbox = afilter['ogc:BBOX']
+        if 'ogc:PropertyName' not in bbox:
+            return field, value
+        if 'gml:Envelope' not in bbox:
+            return field, value
+        # property_name = bbox['ogc:PropertyName']
+        envelope = bbox['gml:Envelope']
+        field = 'encloses'
+        lower = envelope['gml:lowerCorner'].split()
+        upper = envelope['gml:upperCorner'].split()
+        values = '{},{},{},{}'.format(upper[1], lower[0], lower[1], upper[0])
+        print('Spatials: {} {}'.format(field, values))
+        return field, values
+
     def _get_repo_filter(self, constraint=None, sortby=None, maxrecords=10, startposition=0):
         """
         Construct an ES query params from the pyCSW constraints
@@ -139,18 +161,20 @@ class ElasticSearchRepository(object):
         if constraint:
             if constraint.get('type') == 'filter':
                 field = None
-                value = None
-                where = constraint.get('where')
-                where_lst = where.split(' ')
-                print('where_lst: {}'.format(where_lst))
-                if where_lst[0] == 'title':
-                    field = 'metadata_json.titles.title'
-                elif where_lst[0] == 'keywords':
-                    field = 'metadata_json.subjects.subject'
-                values = constraint.get('values')
+                values = constraint.get('values', None)
                 if len(values) > 0:
                     value = values[0]
                     value = value.replace('%', '')
+
+                where = constraint.get('where')
+                print('where: {}'.format(where))
+                if where.startswith('title'):
+                    field = 'metadata_json.titles.title'
+                elif where.startswith('keywords'):
+                    field = 'metadata_json.subjects.subject'
+                elif where.startswith('query_spatial'):
+                    field, value = self._parse_spatial_search(constraint['_dict'])
+
                 if field and value:
                     query = {field: value}
                 else:
