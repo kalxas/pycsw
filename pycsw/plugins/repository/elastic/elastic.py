@@ -164,13 +164,16 @@ class ElasticSearchRepository(object):
         """
         Construct an ES query params from the pyCSW constraints
         """
+        match = 'must'
         query = {}
         if constraint:
             if constraint.get('type') == 'filter':
                 field = None
+                value = None
                 values = constraint.get('values', None)
                 if len(values) > 0:
                     value = values[0]
+                print('value: {}'.format(value))
 
                 where = constraint.get('where')
                 print('where: {}'.format(where))
@@ -179,15 +182,21 @@ class ElasticSearchRepository(object):
 
                 if where.startswith('title'):
                     field = 'metadata_json.titles.title'
+                    query = {field: value}
                 elif where.startswith('keywords'):
                     field = 'metadata_json.subjects.subject'
+                    query = {field: value}
                 elif where.startswith('query_spatial'):
                     field, value = self._parse_spatial_search(constraint['_dict'])
-
-                if field and value:
                     query = {field: value}
-                else:
+                elif where.startswith('anytext'):
+                    match = 'should'
+                    for anyfield in ['titles.title', 'subjects.subject']:
+                        query['metadata_json.{}'.format(anyfield)] = value
+
+                if not query:
                     query = {'wtf': 'wtf'}
+
             elif constraint.get('type') == 'cql_text':
                 # TODO
                 pass
@@ -224,6 +233,8 @@ class ElasticSearchRepository(object):
         if maxrecords:
             print('maxrecords: {}'.format(maxrecords))
             query['size'] = maxrecords
+
+        query['match'] = match
 
         return query
 
