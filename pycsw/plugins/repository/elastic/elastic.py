@@ -30,6 +30,9 @@
 # OTHER DEALINGS IN THE SOFTWARE.
 #
 # =================================================================
+# ToDo:
+# Sort by BoundingBox
+# =================================================================
 
 import logging
 import json
@@ -168,10 +171,12 @@ class ElasticSearchRepository(object):
                 values = constraint.get('values', None)
                 if len(values) > 0:
                     value = values[0]
-                    value = value.replace('%', '')
 
                 where = constraint.get('where')
                 print('where: {}'.format(where))
+                if 'like' in where:
+                    value = value.replace('%', '*')
+
                 if where.startswith('title'):
                     field = 'metadata_json.titles.title'
                 elif where.startswith('keywords'):
@@ -210,6 +215,8 @@ class ElasticSearchRepository(object):
                     query['sort'] = 'metadata_json.dates.date.lte'
                 elif sortby['propertyname'] == 'publisher':
                     query['sort'] = 'metadata_json.publisher.raw'
+                elif sortby['propertyname'] == 'wkt_geometry':
+                    query['sort'] = 'metadata_json.geoLocations'
                 else:
                     query['sort'] = 'metadata_json.{}'.format(sortby['propertyname'])
                 query['sortorder'] = sortby.get('order').lower()

@@ -2,7 +2,6 @@ GetCapabilities,service=CSW&version=2.0.2&request=GetCapabilities
 GetRecords-all-brief,service=CSW&version=2.0.2&request=GetRecords&typenames=csw:Record&elementsetname=brief&resulttype=results&SortBy=dc:identifier:A
 GetRecords-all-summary,service=CSW&version=2.0.2&request=GetRecords&typenames=csw:Record&elementsetname=summary&resulttype=results&SortBy=dc:identifier:A
 GetRecords-all-full,service=CSW&version=2.0.2&request=GetRecords&typenames=csw:Record&elementsetname=full&resulttype=results&SortBy=dc:identifier:A
-GetRecords-filter-cql-title,service=CSW&version=2.0.2&request=GetRecords&typenames=csw:Record&elementsetname=full&resulttype=results&constraintlanguage=CQL_TEXT&constraint=dc%3Atitle%20like%20%27%25Second%25%27
 GetRecords-filter-cql-subject,service=CSW&version=2.0.2&request=GetRecords&typenames=csw:Record&elementsetname=full&resulttype=results&constraintlanguage=CQL_TEXT&constraint=dc%3Asubject%20like%20%27%25101%25%27
 GetRecordById-brief,service=CSW&version=2.0.2&request=GetRecordById&elementsetname=brief&id=12.02010.1
 GetRecordById-brief-fail,service=CSW&version=2.0.2&request=GetRecordById&elementsetname=brief&id=12.02010
