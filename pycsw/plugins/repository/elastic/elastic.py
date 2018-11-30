@@ -190,9 +190,8 @@ class ElasticSearchRepository(object):
                     field, value = self._parse_spatial_search(constraint['_dict'])
                     query = {field: value}
                 elif where.startswith('anytext'):
-                    match = 'should'
-                    for anyfield in ['titles.title', 'subjects.subject']:
-                        query['metadata_json.{}'.format(anyfield)] = value
+                    field = 'anytext'
+                    query = {field: value}
 
                 if not query:
                     query = {'wtf': 'wtf'}
@@ -361,11 +360,10 @@ class ElasticSearchRepository(object):
                 rights.append(rgt['rights'])
             result['accessconstraints'] = ','.join(rights)
 
-        lstDescriptions = record.get('description', False)
+        lstDescriptions = record.get('descriptions', False)
         if lstDescriptions:
-            # descriptionType is empty but shows Abstract on the real xml
             for desc in lstDescriptions:
-                if desc.get('descriptionType', '') in ['', 'abstract']:
+                if desc.get('descriptionType', '').lower() in ['', 'abstract']:
                     result['abstract'] = desc['description']
                     break
 
@@ -400,7 +398,6 @@ class ElasticSearchRepository(object):
                     break
 
         # TODO OUSTANDING FIELDS
-        # anytext
 
         dataset = type('', (object,), result)()
         print(str(dataset))
