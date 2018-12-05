@@ -135,66 +135,118 @@ class ElasticSearchRepository(object):
         return results
 
     def _parse_spatial_search(self, where):
-        field = 'wtf'
-        value = 'wtf'
-        if 'ogc:Filter' not in where:
+        field = '-'
+        value = '-'
+        lst = where.split('POLYGON')
+        if len(lst) != 2:
             return field, value
-        afilter = where['ogc:Filter']
+        right = lst[1]
+        idx = right.find('))')
+        if idx < 0:
+            return field, value
+        coords = right[2:idx].split(', ')
+        top_left = coords[3].split(' ')
+        bot_right = coords[1].split(' ')
         field = 'overlaps'
-        print(str(afilter))
-        if 'ogc:Not' in afilter:
+        if right.split(' ')[-1] == "'false'":
             field = 'excludes'
-            afilter = afilter['ogc:Not']
-        if 'ogc:BBOX' not in afilter:
-            return field, value
-        bbox = afilter['ogc:BBOX']
-        if 'ogc:PropertyName' not in bbox:
-            return field, value
-        if 'gml:Envelope' not in bbox:
-            return field, value
-        # property_name = bbox['ogc:PropertyName']
-        envelope = bbox['gml:Envelope']
-        lower = envelope['gml:lowerCorner'].split()
-        upper = envelope['gml:upperCorner'].split()
-        values = '{},{},{},{}'.format(upper[1], lower[0], lower[1], upper[0])
+        values = '{} {} {} {}'.format(
+            top_left[0], top_left[1], bot_right[0], bot_right[1])
         print('Spatials: {} {}'.format(field, values))
         return field, values
+
+    def _convert_single_query(self, where, value):
+        query = {}
+        if 'like' in where:
+            value = value.replace('%', '*')
+
+        if where.startswith('title'):
+            field = 'metadata_json.titles.title'
+            query = {field: value}
+        elif where.startswith('keywords'):
+            field = 'metadata_json.subjects.subject'
+            query = {field: value}
+        elif where.startswith('query_spatial'):
+            field, value = \
+                self._parse_spatial_search(where)
+            query = {field: value}
+        elif where.startswith('anytext'):
+            field = 'anytext'
+            query = {field: value}
+
+        return query
+
+    def _convert_complex_query(self, where, values):
+        query = {}
+        if ' and ' in where:
+            and_list = where.split(' and ')
+            items = []
+            idx = 0
+            for item in and_list:
+                if item.startswith('query_spatial'):
+                    value = ''
+                else:
+                    value = values[idx]
+                    idx += 1
+                sub = self._convert_complex_query(item, [value])
+                items.append(sub)
+
+            if items:
+                query = {'and': _construct_kv_string(items)}
+
+        elif ' or ' in where:
+            or_list = where.split(' or ')
+            items = []
+            idx = 0
+            for item in or_list:
+                if item.startswith('query_spatial'):
+                    value = ''
+                else:
+                    value = values[idx]
+                    idx += 1
+                sub = self._convert_complex_query(item, [value])
+                items.append(sub)
+
+            if items:
+                query = {'or': _construct_kv_string(items)}
+
+        elif where.startswith('not'):
+            items = []
+            idx = 0
+            not_clause = where.replace('not ', '')
+            if not_clause.startswith('query_spatial'):
+                value = ''
+            else:
+                value = values[idx]
+                idx += 1
+            sub = self. _convert_complex_query(not_clause, value)
+            if sub:
+                query = {'not': _construct_kv_string([sub])}
+        else:
+            value = None
+            if len(values) > 0:
+                value = values[0]
+            query = self._convert_single_query(where, value)
+
+        return query
 
     def _get_repo_filter(self, constraint=None, sortby=None, maxrecords=10, startposition=0):
         """
         Construct an ES query params from the pyCSW constraints
         """
-        match = 'must'
         query = {}
         if constraint:
             if constraint.get('type') == 'filter':
-                field = None
-                value = None
                 values = constraint.get('values', None)
-                if len(values) > 0:
-                    value = values[0]
-                print('value: {}'.format(value))
+                print('values: {}'.format(values))
 
                 where = constraint.get('where')
                 print('where: {}'.format(where))
-                if 'like' in where:
-                    value = value.replace('%', '*')
 
-                if where.startswith('title'):
-                    field = 'metadata_json.titles.title'
-                    query = {field: value}
-                elif where.startswith('keywords'):
-                    field = 'metadata_json.subjects.subject'
-                    query = {field: value}
-                elif where.startswith('query_spatial'):
-                    field, value = self._parse_spatial_search(constraint['_dict'])
-                    query = {field: value}
-                elif where.startswith('anytext'):
-                    field = 'anytext'
-                    query = {field: value}
+                query = self._convert_complex_query(where, values)
 
                 if not query:
-                    query = {'wtf': 'wtf'}
+                    query = {'-': '-'}
 
             elif constraint.get('type') == 'cql_text':
                 # TODO
@@ -232,8 +284,6 @@ class ElasticSearchRepository(object):
         if maxrecords:
             print('maxrecords: {}'.format(maxrecords))
             query['size'] = maxrecords
-
-        query['match'] = match
 
         return query
 
@@ -349,7 +399,7 @@ class ElasticSearchRepository(object):
                     keywords.append(subject)
             result['keywords'] = ','.join(keywords)
 
-        dc_date = get_dc_date(record)
+        dc_date = _get_dc_date(record)
         if dc_date:
             result['date'] = dc_date
 
@@ -404,7 +454,7 @@ class ElasticSearchRepository(object):
         return dataset
 
 
-def get_dc_date(record):
+def _get_dc_date(record):
     dates = record.get('dates', [])
     dc_date = None
     for adate in dates:
@@ -420,3 +470,11 @@ def get_dc_date(record):
             dc_date = year
 
     return dc_date
+
+
+def _construct_kv_string(params):
+    result = []
+    for param in params:
+        for key, value in param.items():
+            result.append("{}={}".format(key, value))
+    return ','.join(result)

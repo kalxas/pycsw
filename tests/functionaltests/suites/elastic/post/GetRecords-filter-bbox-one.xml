@@ -7,8 +7,8 @@
 				<ogc:BBOX>
 					<ogc:PropertyName>ows:BoundingBox</ogc:PropertyName>
 					<gml:Envelope>
-						<gml:lowerCorner>18.41 -34.09</gml:lowerCorner>
-						<gml:upperCorner>18.4 -34.08</gml:upperCorner>
+						<gml:lowerCorner>18.4 -34.09</gml:lowerCorner>
+						<gml:upperCorner>18.41 -34.08</gml:upperCorner>
 					</gml:Envelope>
 				</ogc:BBOX>
             </ogc:Filter>

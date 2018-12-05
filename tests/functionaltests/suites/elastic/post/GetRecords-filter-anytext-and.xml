@@ -7,14 +7,12 @@
         <ogc:And>
           <ogc:PropertyIsLike wildCard="*" singleChar="?" escapeChar="\" matchCase="false">
             <ogc:PropertyName>csw:AnyText</ogc:PropertyName>
+            <ogc:Literal>*second*</ogc:Literal>
+          </ogc:PropertyIsLike>
+          <ogc:PropertyIsLike wildCard="*" singleChar="?" escapeChar="\" matchCase="false">
+            <ogc:PropertyName>csw:AnyText</ogc:PropertyName>
             <ogc:Literal>*datacite*</ogc:Literal>
           </ogc:PropertyIsLike>
-          <ogc:Not>
-            <ogc:PropertyIsLike wildCard="*" singleChar="?" escapeChar="\" matchCase="false">
-              <ogc:PropertyName>csw:AnyText</ogc:PropertyName>
-              <ogc:Literal>*second*</ogc:Literal>
-            </ogc:PropertyIsLike>
-          </ogc:Not>
         </ogc:And>
       </ogc:Filter>
     </csw:Constraint>
