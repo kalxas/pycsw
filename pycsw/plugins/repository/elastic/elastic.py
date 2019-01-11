@@ -429,7 +429,7 @@ class ElasticSearchRepository(object):
             result['language'] = language
 
         lstFormats = record.get('formats', False)
-        if lstFormats:
+        if isinstance(lstFormats, list) and len(lstFormats):
             # Assume first is correct
             if lstFormats[0].get('format', False):
                 result['format'] = lstFormats[0].get('format')
