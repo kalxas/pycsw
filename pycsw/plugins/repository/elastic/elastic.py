@@ -53,6 +53,8 @@ class ElasticSearchRepository(object):
 
         self.context = context
         self.filter = repo_filter
+        self.filter = repo_filter.split(',')[0]
+        self.elastic_index = repo_filter.split(',')[1]
         self.fts = False
         self.label = 'ElasticSearch'
         self.local_ingest = True
@@ -290,7 +292,7 @@ class ElasticSearchRepository(object):
     def _run_es_query(self, base_url, params):
 
         try:
-            params['index'] = 'md_index_1'
+            params['index'] = self.elastic_index
             print(str(params))
             response = requests.post(url=base_url, params=params)
         except requests.exceptions.ConnectionError as e:
@@ -376,7 +378,7 @@ class ElasticSearchRepository(object):
         lstContributors = record.get('contributors', False)
         if lstContributors:
             for cbt in lstContributors:
-                contributorName = cbt['contributorName']
+                contributorName = cbt['name']
                 if contributorName:
                     result['contributor'] = contributorName
                     break
@@ -384,7 +386,7 @@ class ElasticSearchRepository(object):
         lstCreators = record.get('creators', False)
         if lstCreators:
             for crt in lstCreators:
-                creatorName = crt['creatorName']
+                creatorName = crt['name']
                 if creatorName:
                     result['creator'] = creatorName
                     break
@@ -431,8 +433,7 @@ class ElasticSearchRepository(object):
         lstFormats = record.get('formats', False)
         if isinstance(lstFormats, list) and len(lstFormats):
             # Assume first is correct
-            if lstFormats[0].get('format', False):
-                result['format'] = lstFormats[0].get('format')
+            result['format'] = lstFormats[0][0]
 
         asource = record.get('immutableResource', False)
         if asource:
@@ -448,7 +449,6 @@ class ElasticSearchRepository(object):
                     break
 
         # TODO OUSTANDING FIELDS
-
         dataset = type('', (object,), result)()
         print(str(dataset))
         return dataset
