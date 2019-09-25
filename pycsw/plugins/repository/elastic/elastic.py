@@ -377,19 +377,21 @@ class ElasticSearchRepository(object):
 
         lstContributors = record.get('contributors', False)
         if lstContributors:
+            contributors = []
             for cbt in lstContributors:
                 contributorName = cbt['name']
                 if contributorName:
-                    result['contributor'] = contributorName
-                    break
+                    contributors.append(contributorName)
+            result['contributor'] = ';'.join(contributors)
 
         lstCreators = record.get('creators', False)
         if lstCreators:
+            creators = []
             for crt in lstCreators:
                 creatorName = crt['name']
                 if creatorName:
-                    result['creator'] = creatorName
-                    break
+                    creators.append(creatorName)
+            result['creator'] = ';'.join(creators)
 
         lstSubjects = record.get('subjects', False)
         if lstSubjects:
@@ -405,7 +407,7 @@ class ElasticSearchRepository(object):
         if dc_date:
             result['date'] = dc_date
 
-        lstRights = record.get('rights', False)
+        lstRights = record.get('rightsList', False)
         if lstRights:
             rights = []
             for rgt in lstRights:
@@ -443,14 +445,26 @@ class ElasticSearchRepository(object):
         lstGeoLocations = record.get('geoLocations', False)
         if lstGeoLocations:
             for loc in lstGeoLocations:
-                if loc.get('geoLocationPolygons', False):
+                if loc.get('geoLocationBox', False):
                     # Assume first is correct
-                    result['wkt_geometry'] = loc['geoLocationPolygons'][0]
+                    result['wkt_geometry'] = loc.get('geoLocationBox')
                     break
 
+        # "name,description,protocol,url[^,,,[^,,,]]"
+        lstLinks = record.get('linkedResources', False)
+        if lstLinks:
+            links = []
+            for link in lstLinks:
+                name = link.get('linkedResourceType')
+                description = link.get('resourceDescription')
+                protocol=''
+                url = link.get('resourceURL').replace(',',"%2c")
+                links.append("{},{},{},{}".format(name,description,protocol,url))
+                #print("\n\n{}\n\n".format(links))
+            result['links'] = "^".join(links)
         # TODO OUSTANDING FIELDS
         dataset = type('', (object,), result)()
-        print(str(dataset))
+        #print(str(dataset))
         return dataset
 
 
