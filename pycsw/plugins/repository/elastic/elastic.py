@@ -37,6 +37,7 @@
 import logging
 import json
 import requests
+import string
 # from pycsw.core import util
 
 LOGGER = logging.getLogger(__name__)
@@ -121,18 +122,18 @@ class ElasticSearchRepository(object):
         """
 
         query = self._get_repo_filter(constraint, sortby, maxrecords, startposition)
-        if maxrecords:
-            # run the raw query and get total
-            tmp_query = dict(query)
-            tmp_query.pop('size')
-            results = self._run_es_query(self.filter, tmp_query)
-            record_set_size = int(results[0])
-
         results = self._run_es_query(self.filter, query)
 
-        if maxrecords:
-            # Adjust numberOfRecordsMatched
-            results[0] = str(record_set_size)
+        # Adjust numberOfRecordsMatched:
+        #  set to Total records found at search index
+        total_records = self._get_total_records(self.filter)
+        if total_records:
+            results[0] = str(total_records)
+        else:
+            print("Error: Could not set records matched to total at Index," \
+                  " setting instead to records length returned from query")
+
+            results[0] = str(results[0])
 
         return results
 
@@ -323,6 +324,35 @@ class ElasticSearchRepository(object):
         results = self.transpose_records(json_dict['results'])
         return [str(len(results)), results]
 
+    def _get_total_records(self, base_url, params={}):
+        try:
+            # TODO: below approach gets total records implictly by requesting all titles
+            #       refactor when elastic-agent supports total records at index request
+            #       set response size (# of records) to max allowable by elastic-agent (10000)
+            params['index'] = self.elastic_index
+            params['fields'] = 'metadata_json.titles.title'
+            params['size'] = 10000
+            response = requests.post(url=base_url, params=params)
+        except requests.exceptions.ConnectionError as e:
+            print('ConnectError connecting to Elastic search backend: {}'.format(e))
+            return
+        except Exception as e:
+            print('Elastic search backend error: {}'.format(e))
+            return
+
+        if response.status_code != 200:
+            print('Request failed with return code: %s' % (
+                response.status_code))
+            return
+
+        try:
+            json_dict = json.loads(response.text)
+            total_records = int(json_dict['result_length'])
+            return total_records
+        except Exception as e:
+            LOGGER.error('Response is not valid json: {}'.format(e))
+            return
+
     def elastic_available(self, url):
         try:
             response = requests.get(url="{}".format(url))
@@ -348,6 +378,21 @@ class ElasticSearchRepository(object):
 
     def transpose_a_record(self, record):
 
+        def lit_str(in_str):
+            out_str = None
+            valid_str = True
+            for c in in_str:
+                if c not in string.printable:
+                    valid_str = False
+                    break
+            if valid_str:
+                out_str = in_str
+            else:
+                out_str = "%r" % in_str
+                print("Non-ASCII string, reverting to "\
+                        "literal/raw string: {}".format(out_str))
+            return out_str
+
         result = {
             'type': 'service',
             'wkt_geometry': None,
@@ -366,7 +411,7 @@ class ElasticSearchRepository(object):
                 if title:
                     if not primary_is_set:
                         # Use the first title
-                        result['title'] = title
+                        result['title'] = lit_str(title)
                         primary_is_set = True
                     elif not result.get('alternateTitle'):
                         result['alternateTitle'] = title
@@ -455,13 +500,14 @@ class ElasticSearchRepository(object):
         if lstLinks:
             links = []
             for link in lstLinks:
-                name = link.get('linkedResourceType')
-                description = link.get('resourceDescription')
+                name = "%r" % link.get('linkedResourceType')
+                description = "%r" % link.get('resourceDescription')
                 protocol=''
                 url = link.get('resourceURL').replace(',',"%2c")
                 links.append("{},{},{},{}".format(name,description,protocol,url))
                 #print("\n\n{}\n\n".format(links))
             result['links'] = "^".join(links)
+
         # TODO OUSTANDING FIELDS
         dataset = type('', (object,), result)()
         #print(str(dataset))
