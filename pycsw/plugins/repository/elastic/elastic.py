@@ -122,6 +122,8 @@ class ElasticSearchRepository(object):
         """
 
         query = self._get_repo_filter(constraint, sortby, maxrecords, startposition)
+        query['organization'] = "Climate Systems Analysis Group"
+        query['match'] = "must_not"
         results = self._run_es_query(self.filter, query)
 
         # Adjust numberOfRecordsMatched:
@@ -294,7 +296,7 @@ class ElasticSearchRepository(object):
 
         try:
             params['index'] = self.elastic_index
-            print(str(params))
+            print("es query params {}".format(str(params)))
             response = requests.post(url=base_url, params=params)
         except requests.exceptions.ConnectionError as e:
             LOGGER.error('ConnectError connecting to Elastic search backend: {}'.format(e))
@@ -329,6 +331,8 @@ class ElasticSearchRepository(object):
             # TODO: below approach gets total records implictly by requesting all titles
             #       refactor when elastic-agent supports total records at index request
             #       set response size (# of records) to max allowable by elastic-agent (10000)
+            params['organization'] = "Climate Systems Analysis Group"
+            params['match'] = "must_not"
             params['index'] = self.elastic_index
             params['fields'] = 'metadata_json.titles.title'
             params['size'] = 10000
