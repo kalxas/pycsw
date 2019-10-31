@@ -383,18 +383,10 @@ class ElasticSearchRepository(object):
     def transpose_a_record(self, record):
 
         def lit_str(in_str):
-            out_str = None
-            valid_str = True
-            for c in in_str:
-                if c not in string.printable:
-                    valid_str = False
-                    break
-            if valid_str:
-                out_str = in_str
-            else:
-                out_str = "%r" % in_str
-                print("Non-ASCII string, reverting to "\
-                        "literal/raw string: {}".format(out_str))
+            not_allowed = r"\x0e"
+            out_str = in_str
+            if not_allowed in "%r" % out_str:
+                out_str = "%r" % out_str
             return out_str
 
         result = {
