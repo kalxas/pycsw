@@ -439,7 +439,7 @@ class ElasticSearchRepository(object):
             keywords = []
             for sbj in lstSubjects:
                 subject = sbj['subject']
-                if subject:
+                if subject and subject != "Downloadable Data":
                     # Add all subjects
                     keywords.append(subject)
             result['keywords'] = ','.join(keywords)
@@ -479,10 +479,10 @@ class ElasticSearchRepository(object):
             # Assume first is correct
             result['format'] = lstFormats[0][0]
 
-        asource = record.get('immutableResource', False)
-        if asource:
-            if asource.get('resourceURL', False):
-                result['source'] = asource.get('resourceURL')
+        #asource = record.get('immutableResource', False)
+        #if asource:
+        #    if asource.get('resourceURL', False):
+        #        result['source'] = asource.get('resourceURL')
 
         lstGeoLocations = record.get('geoLocations', False)
         if lstGeoLocations:
@@ -496,14 +496,31 @@ class ElasticSearchRepository(object):
         # "name,description,protocol,url[^,,,[^,,,]]"
         lstLinks = record.get('linkedResources', False)
         if lstLinks:
+            protocols_allowed = ['Query','Information','Download','Metadata']
             links = []
             for link in lstLinks:
-                name = "%r" % link.get('linkedResourceType')
-                description = "%r" % link.get('resourceDescription')
-                protocol=''
+                name = "%r" % link.get('resourceDescription')
+                description = name
+                #protocol="%r" % link.get('linkedResourceType')
+                protocol=link.get('linkedResourceType')
                 url = link.get('resourceURL').replace(',',"%2c")
-                links.append("{},{},{},{}".format(name,description,protocol,url))
-                #print("\n\n{}\n\n".format(links))
+                if protocol in protocols_allowed:
+                    name = name.replace(",","")
+                    description = description.replace(",","")
+                    links.append("{},{},{},{}".format(name,description,protocol,url))
+                else:
+                    print("Invalid protocol: {}".format(protocol))
+
+            immutableR = record.get('immutableResource', False)
+            if immutableR:
+                url = immutableR.get('resourceURL').replace(',',"%2c")
+                if url != 'download link unavailable':
+                    name = "%r" % link.get('resourceDescription').replace(",","")
+                    description = name
+                    protocol= "Download"
+                    links.append("{},{},{},{}".format(name,description,protocol,url))
+                    #print("Adding {}".format(url))
+  
             result['links'] = "^".join(links)
 
         # TODO OUSTANDING FIELDS
