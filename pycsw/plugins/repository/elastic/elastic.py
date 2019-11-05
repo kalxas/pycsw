@@ -447,6 +447,7 @@ class ElasticSearchRepository(object):
         dc_date = _get_dc_date(record)
         if dc_date:
             result['date'] = dc_date
+            result['date_publication'] = dc_date
 
         lstRights = record.get('rightsList', False)
         if lstRights:
