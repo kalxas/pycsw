@@ -282,6 +282,8 @@ class ElasticSearchRepository(object):
                     query['sort'] = 'metadata_json.publisher.raw'
                 elif sortby['propertyname'] == 'wkt_geometry':
                     query['sort'] = 'metadata_json.geoLocations'
+                elif sortby['propertyname'] == 'date':
+                    query['sort'] = 'metadata_json.publicationYear'
                 else:
                     query['sort'] = 'metadata_json.{}'.format(sortby['propertyname'])
                 query['sortorder'] = sortby.get('order').lower()
