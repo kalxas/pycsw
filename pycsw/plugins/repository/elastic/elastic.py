@@ -298,7 +298,7 @@ class ElasticSearchRepository(object):
 
         try:
             params['index'] = self.elastic_index
-            params['organization'] = "Climate Systems Analysis Group"
+            #params['organization'] = "Climate Systems Analysis Group"
             print("es query params {}".format(str(params)))
             response = requests.post(url=base_url, params=params)
         except requests.exceptions.ConnectionError as e:
@@ -334,7 +334,7 @@ class ElasticSearchRepository(object):
             # TODO: below approach gets total records implictly by requesting all titles
             #       refactor when elastic-agent supports total records at index request
             #       set response size (# of records) to max allowable by elastic-agent (10000)
-            params['organization'] = "Climate Systems Analysis Group"
+            #params['organization'] = "Climate Systems Analysis Group"
             #params['match'] = "must_not"
             params['index'] = self.elastic_index
             params['fields'] = 'metadata_json.titles.title'
@@ -437,6 +437,9 @@ class ElasticSearchRepository(object):
                     creators.append(creatorName)
             result['creator'] = ';'.join(creators)
 
+        lstRespParties = record.get('responsibleParties', False)
+        result['contributor'] = str(lstRespParties)
+
         lstSubjects = record.get('subjects', False)
         if lstSubjects:
             keywords = []
@@ -446,6 +449,22 @@ class ElasticSearchRepository(object):
                     # Add all subjects
                     keywords.append(subject)
             result['keywords'] = ','.join(keywords)
+        
+        descr_keywords = record.get('descriptiveKeywords', False)
+        if descr_keywords:
+            keywords = []
+            for d_kword in descr_keywords:
+                d_keyword = d_kword['keyword']
+                keywords.append(d_keyword)
+            dk_list = ','.join(keywords)
+            result['keywords'] += dk_list
+
+        topic_categories = record.get('topicCategories', False)
+        if topic_categories:
+            categories = []
+            for t_cat in topic_categories:
+                categories.append(t_cat)
+            result['topicategory'] = ','.join(categories)
 
         dc_date = _get_dc_date(record)
         if dc_date:
@@ -499,9 +518,10 @@ class ElasticSearchRepository(object):
 
         # "name,description,protocol,url[^,,,[^,,,]]"
         lstLinks = record.get('linkedResources', False)
+        links = []
         if lstLinks:
             protocols_allowed = ['Query','Information','Download','Metadata']
-            links = []
+            #links = []
             for link in lstLinks:
                 name = "%r" % link.get('resourceDescription')
                 description = name
@@ -515,17 +535,23 @@ class ElasticSearchRepository(object):
                 else:
                     print("Invalid protocol: {}".format(protocol))
 
-            immutableR = record.get('immutableResource', False)
-            if immutableR:
-                url = immutableR.get('resourceURL').replace(',',"%2c")
-                if url != 'download link unavailable':
-                    name = "%r" % link.get('resourceDescription').replace(",","")
-                    description = name
-                    protocol= "Download"
-                    links.append("{},{},{},{}".format(name,description,protocol,url))
-                    #print("Adding {}".format(url))
+        immutableR = record.get('immutableResource', False)
+        if immutableR:
+            url = immutableR.get('resourceURL').replace(',',"%2c")
+            #if url != 'download link unavailable':
+            name = immutableR.get('resourceName')
+            description = name
+            protocol= "html"
+            #print("\n\n Adding {},{},{},{} \n\n".format(name,description,protocol,url))
+            links.append("{},{},{},{}".format(name,description,protocol,url))
+            #print("Adding {}".format(url))
   
+        if lstLinks or immutableR:
             result['links'] = "^".join(links)
+
+        lineage = record.get('lineageStatement', False)
+        if lineage:
+            result['lineage'] = lineage        
 
         # TODO OUSTANDING FIELDS
         dataset = type('', (object,), result)()
