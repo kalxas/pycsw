@@ -48,6 +48,7 @@ class APISO(profile.Profile):
             'apiso': 'http://www.opengis.net/cat/csw/apiso/1.0',
             'gco': 'http://www.isotc211.org/2005/gco',
             'gmd': 'http://www.isotc211.org/2005/gmd',
+            'gml': 'http://www.opengis.net/gml',
             'srv': 'http://www.isotc211.org/2005/srv',
             'xlink': 'http://www.w3.org/1999/xlink'
         }
@@ -639,6 +640,90 @@ class APISO(profile.Profile):
         bboxel = write_extent(val, self.namespaces)
         if bboxel is not None and mtype != 'service':
             resident.append(bboxel)
+
+        # temporal extent: begin time
+        
+        val = util.getqattr(result, queryables['apiso:TempExtent_begin']['dbcol']) or ''
+        identification = etree.SubElement(node, util.nspath_eval('gmd:identificationInfo', self.namespaces))
+
+        if mtype == 'service':
+           restagname = 'srv:SV_ServiceIdentification'
+        else:
+           restagname = 'gmd:MD_DataIdentification'
+
+        resident = etree.SubElement(identification, util.nspath_eval(restagname, self.namespaces), id=idval)
+        tmp2 = etree.SubElement(resident, util.nspath_eval('gmd:extent', self.namespaces))
+        tmp3 = etree.SubElement(tmp2, util.nspath_eval('gmd:EX_Extent', self.namespaces))
+        tmp4 = etree.SubElement(tmp3, util.nspath_eval('gmd:temporalElement', self.namespaces))
+        tmp5 = etree.SubElement(tmp4, util.nspath_eval('gmd:EX_TemporalExtent', self.namespaces))
+        tmp6 = etree.SubElement(tmp5, util.nspath_eval('gmd:extent', self.namespaces))
+        tmp7 = etree.SubElement(tmp6, util.nspath_eval('gml:TimePeriod', self.namespaces))
+        etree.SubElement(tmp7, util.nspath_eval('gml:beginPosition', self.namespaces)).text = val
+
+        # temporal extent: end time        
+        val = util.getqattr(result, queryables['apiso:TempExtent_end']['dbcol']) or ''
+        identification = etree.SubElement(node, util.nspath_eval('gmd:identificationInfo', self.namespaces))
+
+        if mtype == 'service':
+           restagname = 'srv:SV_ServiceIdentification'
+        else:
+           restagname = 'gmd:MD_DataIdentification'
+
+        resident = etree.SubElement(identification, util.nspath_eval(restagname, self.namespaces), id=idval)
+        tmp2 = etree.SubElement(resident, util.nspath_eval('gmd:extent', self.namespaces))
+        tmp3 = etree.SubElement(tmp2, util.nspath_eval('gmd:EX_Extent', self.namespaces))
+        tmp4 = etree.SubElement(tmp3, util.nspath_eval('gmd:temporalElement', self.namespaces))
+        tmp5 = etree.SubElement(tmp4, util.nspath_eval('gmd:EX_TemporalExtent', self.namespaces))
+        tmp6 = etree.SubElement(tmp5, util.nspath_eval('gmd:extent', self.namespaces))
+        tmp7 = etree.SubElement(tmp6, util.nspath_eval('gml:TimePeriod', self.namespaces))
+        etree.SubElement(tmp7, util.nspath_eval('gml:endPosition', self.namespaces)).text = val
+        
+
+        # lineage
+        val = util.getqattr(result, queryables['apiso:Lineage']['dbcol']) or ''
+        identification = etree.SubElement(node, util.nspath_eval('gmd:dataQualityInfo', self.namespaces))
+
+        restagname = 'gmd:DQ_DataQuality'
+
+        resident = etree.SubElement(identification, util.nspath_eval(restagname, self.namespaces), id=idval)
+        tmp2 = etree.SubElement(resident, util.nspath_eval('gmd:lineage', self.namespaces))
+        tmp3 = etree.SubElement(tmp2, util.nspath_eval('gmd:LI_Lineage', self.namespaces))
+        tmp4 = etree.SubElement(tmp3, util.nspath_eval('gmd:statement', self.namespaces))
+        etree.SubElement(tmp4, util.nspath_eval('gco:CharacterString', self.namespaces)).text = val      
+
+        # conditionsAccessAndUse
+        
+        val = util.getqattr(result, queryables['apiso:ConditionApplyingToAccessAndUse']['dbcol']) or ''
+        identification = etree.SubElement(node, util.nspath_eval('gmd:identificationInfo', self.namespaces))
+
+        if mtype == 'service':
+           restagname = 'srv:SV_ServiceIdentification'
+        else:
+           restagname = 'gmd:MD_DataIdentification'
+
+        resident = etree.SubElement(identification, util.nspath_eval(restagname, self.namespaces), id=idval)
+        tmp2 = etree.SubElement(resident, util.nspath_eval('gmd:resourceConstraints', self.namespaces))
+        tmp3 = etree.SubElement(tmp2, util.nspath_eval('gmd:MD_Constraints', self.namespaces))
+        tmp4 = etree.SubElement(tmp3, util.nspath_eval('gmd:useLimitation', self.namespaces))
+        etree.SubElement(tmp4, util.nspath_eval('gco:CharacterString', self.namespaces)).text = val
+        
+
+        # accessConstraints
+        
+        val = util.getqattr(result, queryables['apiso:AccessConstraints']['dbcol']) or ''
+        identification = etree.SubElement(node, util.nspath_eval('gmd:identificationInfo', self.namespaces))
+
+        if mtype == 'service':
+           restagname = 'srv:SV_ServiceIdentification'
+        else:
+           restagname = 'gmd:MD_DataIdentification'
+
+        resident = etree.SubElement(identification, util.nspath_eval(restagname, self.namespaces), id=idval)
+        tmp2 = etree.SubElement(resident, util.nspath_eval('gmd:resourceConstraints', self.namespaces))
+        tmp3 = etree.SubElement(tmp2, util.nspath_eval('gmd:MD_LegalConstraints', self.namespaces))
+        tmp4 = etree.SubElement(tmp3, util.nspath_eval('gmd:accessConstraints', self.namespaces))
+        etree.SubElement(tmp4, util.nspath_eval('gmd:MD_RestrictionCode', self.namespaces)).text = val
+        
 
         # service identification
 

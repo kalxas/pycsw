@@ -472,12 +472,21 @@ class ElasticSearchRepository(object):
             result['date_publication'] = dc_date
             result['date_modified'] = dc_date
 
-        lstRights = record.get('rightsList', False)
-        if lstRights:
-            rights = []
-            for rgt in lstRights:
-                rights.append(rgt['rights'])
-            result['accessconstraints'] = ','.join(rights)
+        #lstRights = record.get('rightsList', False)
+        #if lstRights:
+        #    rights = []
+        #    for rgt in lstRights:
+        #        rights.append(rgt['rights'])
+        #    result['accessconstraints'] = ','.join(rights)
+
+        constraints = record.get('constraints', False)[0]
+        if constraints:
+            print(constraints)
+            access_constraints = constraints['accessConstraints'][0]
+            rights = constraints['rights']
+            #rights_uri = constraints['rightsURI']
+            result['accessconstraints'] = access_constraints
+            result['conditionapplyingtoaccessanduse'] = rights
 
         lstDescriptions = record.get('descriptions', False)
         if lstDescriptions:
@@ -515,6 +524,16 @@ class ElasticSearchRepository(object):
                     # Assume first is correct
                     result['wkt_geometry'] = loc.get('geoLocationBox')
                     break
+
+
+        extent = record.get('extent',False)
+        if extent:
+            start_time = extent['temporalElement']['startTime']
+            end_time = extent['temporalElement']['endTime']
+            result['time_begin'] = start_time
+            result['time_end'] = end_time
+            
+
 
         # "name,description,protocol,url[^,,,[^,,,]]"
         lstLinks = record.get('linkedResources', False)
