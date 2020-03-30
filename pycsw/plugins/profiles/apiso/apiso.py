@@ -441,23 +441,8 @@ class APISO(profile.Profile):
         if esn in ['summary', 'full']:
             class resp_party:
                 pass          
-            resp_parties = idval = util.getqattr(result, self.context.md_core_model['mappings']['pycsw:Contributor'])
-            parts = resp_parties.split('}')
-            rparties_interim = []
-            for p in parts:
-                p = p.replace("[","").replace(" ,","") + "}"
-                if p[0:2] == ', ':
-                    p = p[2:len(p)]
-                if len(p) > 5:                
-                    diff = p.count("{") - p.count("}")
-                    if (diff == 0) or (diff == 1):
-                        if diff == 1:
-                            p += "}"
-                        p_dict = ast.literal_eval(p)
-                        rparties_interim.append(p_dict)           
-                    else:
-                        raise Exception("Couldn't parse contacts in apiso.py")
-
+            resp_parties = util.getqattr(result, self.context.md_core_model['mappings']['pycsw:Contributor'])
+            resp_parties = ast.literal_eval(resp_parties)
 
             rparty_final = []
             def get_contact_detail(contact_dict, k):
@@ -465,7 +450,7 @@ class APISO(profile.Profile):
                     return contact_dict[k]
                 else:
                     return ''
-            for rparty in rparties_interim:
+            for rparty in resp_parties:
                 cont = resp_party()
                 cont.name = get_contact_detail(rparty,u'individualName')
                 cont.organization = get_contact_detail(rparty,u'organizationName')
@@ -473,7 +458,6 @@ class APISO(profile.Profile):
                 cont.role = get_contact_detail(rparty,u'role')
                 cont.address = get_contact_detail(rparty,u'contactInfo')
                 rparty_final.append(cont)
-
 
             #caps_lst = [cont,cont2]
             for caps in rparty_final:
