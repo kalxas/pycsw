@@ -399,6 +399,9 @@ class ElasticSearchRepository(object):
         if record.get('identifier', False):
             result['identifier'] = record['identifier']['identifier']
 
+        if record.get('fileIdentifier',False):
+            result['file_identifier'] = record['fileIdentifier']
+            
         if False:  # record.get('resourceType', False):
             result['type'] = record.get('resourceType')
 
