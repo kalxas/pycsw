@@ -401,9 +401,11 @@ class APISO(profile.Profile):
 
         # File identifier
         idval = util.getqattr(result, self.context.md_core_model['mappings']['pycsw:Identifier'])
+        
+        file_identifer = util.getqattr(result, 'file_identifier')
 
         identifier = etree.SubElement(node, util.nspath_eval('gmd:fileIdentifier', self.namespaces))
-        etree.SubElement(identifier, util.nspath_eval('gco:CharacterString', self.namespaces)).text = idval
+        etree.SubElement(identifier, util.nspath_eval('gco:CharacterString', self.namespaces)).text = file_identifer
 
         # Unique Identifier
         val = util.getqattr(result, self.context.md_core_model['mappings']['pycsw:Identifier']) or ''
@@ -412,10 +414,10 @@ class APISO(profile.Profile):
          # hierarchyLevel
         mtype = util.getqattr(result, queryables['apiso:Type']['dbcol']) or None       
 
-        if mtype == 'service':
-           restagname = 'srv:SV_ServiceIdentification'
-        else:
-           restagname = 'gmd:MD_DataIdentification'
+        #if mtype == 'service':
+        #   restagname = 'srv:SV_ServiceIdentification'
+        #else:
+        restagname = 'gmd:MD_DataIdentification'
 
         resident = etree.SubElement(identification, util.nspath_eval(restagname, self.namespaces), id=idval)
         tmp2 = etree.SubElement(resident, util.nspath_eval('gmd:citation', self.namespaces))
