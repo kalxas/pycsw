@@ -458,7 +458,7 @@ class APISO(profile.Profile):
                 cont.organization = get_contact_detail(rparty,u'organizationName')
                 cont.position = get_contact_detail(rparty,u'positionName')
                 cont.role = get_contact_detail(rparty,u'role')
-                cont.address = get_contact_detail(rparty,u'contactInfo')
+                cont.email = get_contact_detail(rparty,u'contactInfo')
                 rparty_final.append(cont)
 
             #caps_lst = [cont,cont2]
@@ -632,10 +632,10 @@ class APISO(profile.Profile):
         val = util.getqattr(result, queryables['apiso:TempExtent_begin']['dbcol']) or ''
         identification = etree.SubElement(node, util.nspath_eval('gmd:identificationInfo', self.namespaces))
 
-        if mtype == 'service':
-           restagname = 'srv:SV_ServiceIdentification'
-        else:
-           restagname = 'gmd:MD_DataIdentification'
+        #if mtype == 'service':
+        #   restagname = 'srv:SV_ServiceIdentification'
+        #else:
+        restagname = 'gmd:MD_DataIdentification'
 
         resident = etree.SubElement(identification, util.nspath_eval(restagname, self.namespaces), id=idval)
         tmp2 = etree.SubElement(resident, util.nspath_eval('gmd:extent', self.namespaces))
@@ -650,10 +650,10 @@ class APISO(profile.Profile):
         val = util.getqattr(result, queryables['apiso:TempExtent_end']['dbcol']) or ''
         identification = etree.SubElement(node, util.nspath_eval('gmd:identificationInfo', self.namespaces))
 
-        if mtype == 'service':
-           restagname = 'srv:SV_ServiceIdentification'
-        else:
-           restagname = 'gmd:MD_DataIdentification'
+        #if mtype == 'service':
+        #   restagname = 'srv:SV_ServiceIdentification'
+        #else:
+        restagname = 'gmd:MD_DataIdentification'
 
         resident = etree.SubElement(identification, util.nspath_eval(restagname, self.namespaces), id=idval)
         tmp2 = etree.SubElement(resident, util.nspath_eval('gmd:extent', self.namespaces))
