@@ -46,6 +46,8 @@ XPATH_MAPPINGS = {
     'pycsw:AccessConstraints': 'atom:rights',
     'pycsw:Modified': 'atom:updated',
     'pycsw:Source': 'atom:source',
+    'pycsw:TempExtent_begin':'timerange_start',
+    'pycsw:TempExtent_end':'timerange_end'
 }
 
 def write_record(result, esn, context, url=None):
@@ -107,6 +109,11 @@ def write_record(result, esn, context, url=None):
         el.text = val
 
     for qval in ['pycsw:PublicationDate', 'pycsw:AccessConstraints', 'pycsw:Source', 'pycsw:Abstract']:
+        val = util.getqattr(result, context.md_core_model['mappings'][qval])
+        if val:
+            etree.SubElement(node, util.nspath_eval(XPATH_MAPPINGS[qval], NAMESPACES)).text = val
+
+    for qval in ['pycsw:TempExtent_begin','pycsw:TempExtent_end']:
         val = util.getqattr(result, context.md_core_model['mappings'][qval])
         if val:
             etree.SubElement(node, util.nspath_eval(XPATH_MAPPINGS[qval], NAMESPACES)).text = val

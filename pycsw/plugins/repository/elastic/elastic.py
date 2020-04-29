@@ -38,6 +38,7 @@ import logging
 import json
 import requests
 import string
+import datetime
 # from pycsw.core import util
 
 LOGGER = logging.getLogger(__name__)
@@ -452,6 +453,22 @@ class ElasticSearchRepository(object):
             result['date'] = dc_date
             result['date_publication'] = dc_date
             result['date_modified'] = dc_date
+
+        # get the start and end coverage dates; handled with some implicit logic until 
+        # metadata discovery (elastic) gets updated
+
+        dates = record.get('dates', False)
+        if dates:
+            if (len(dates) != 2):
+                print("Error mapping coverage start and end, insufficient/too-many dates!")
+            else:
+                new_dates = []
+                for dt in dates:
+                    new_dates.append(datetime.datetime.strptime(dt['date'],"%Y"))
+                new_dates = sorted(new_dates)
+                result['time_begin'] = new_dates[0].strftime("%Y-%m-%d") + "T00:00:00.000Z"
+                result['time_end'] = new_dates[1].replace(month=12,day=31).strftime("%Y-%m-%d") + "T23:59:59.999Z"
+        
 
         lstRights = record.get('rightsList', False)
         if lstRights:
