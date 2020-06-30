@@ -401,7 +401,17 @@ class ElasticSearchRepository(object):
 
         if record.get('fileIdentifier',False):
             result['file_identifier'] = record['fileIdentifier']
-            
+
+        if record.get('relatedIdentifiers', False):
+            related_ids = record['relatedIdentifiers']
+            rid_url = ''
+            for rid in related_ids:
+                # resolve to one related id for now, preferably a DOI
+                rid_url = rid['relatedIdentifier']
+                if rid['relatedIdentifierType'] == 'DOI':
+                    break
+            result['related_identifiers'] = rid_url
+
         if False:  # record.get('resourceType', False):
             result['type'] = record.get('resourceType')
 

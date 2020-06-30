@@ -408,7 +408,8 @@ class APISO(profile.Profile):
         etree.SubElement(identifier, util.nspath_eval('gco:CharacterString', self.namespaces)).text = file_identifer
 
         # Unique Identifier
-        val = util.getqattr(result, self.context.md_core_model['mappings']['pycsw:Identifier']) or ''
+        val = util.getqattr(result, 'related_identifiers')
+        #val = util.getqattr(result, self.context.md_core_model['mappings']['pycsw:Identifier']) or ''
         identification = etree.SubElement(node, util.nspath_eval('gmd:identificationInfo', self.namespaces))
 
          # hierarchyLevel
