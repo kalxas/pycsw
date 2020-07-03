@@ -126,11 +126,18 @@ class ElasticSearchRepository(object):
         query = self._get_repo_filter(constraint, sortby, maxrecords, startposition)
         #query['organization'] = "Climate Systems Analysis Group"
         #query['match'] = "must_not"
-        results = self._run_es_query(self.filter, query)
+
+        index_sizes = []
+        total_records = 0
+        for es_index in self.elastic_indeces:
+            size = self._get_total_records(self.filter, es_index)
+            index_sizes.append(size)
+            total_records += size
+
+        results = self._run_es_query(self.filter, query, index_sizes)
 
         # Adjust numberOfRecordsMatched:
         #  set to Total records found at search index
-        total_records = self._get_total_records(self.filter)
         if total_records:
             results[0] = str(total_records)
         else:
@@ -296,14 +303,49 @@ class ElasticSearchRepository(object):
 
         return query
 
-    def _run_es_query(self, base_url, params):
+    def _run_es_query(self, base_url, params, index_sizes=[]):
+        # {'start': 10, 'index': u'sans-1878-mims-parent-records-1', 'size': '10'}
+        # TODO: the below index slicing for mulitple indexes only works for one or two indeces
+        indece_slices = []
+        read_all = False
+        if (len(index_sizes) > 1) and ('start' in params) and ('size' in params):
+            if int(params['start']) > index_sizes[0]:
+                indece_slices.append(None)
+                indece_slices.append((int(params['start']) - index_sizes[0], params['size']))
+            elif int(params['start']) < index_sizes[0]:
+                ind_diff_1 = index_sizes[0] - int(params['start'])
+                if int(params['size']) <= ind_diff_1:
+                    indece_slices.append((params['start'], params['size']))
+                    indece_slices.append(None)
+                elif int(params['size']) > ind_diff_1:
+                    indece_slices.append((params['start'], ind_diff_1))
+                    indece_slices.append((1, int(params['size']) - ind_diff_1))
+        elif (len(index_sizes) > 1) and ('start' not in params) and ('size' in params):
+            if int(params['size']) > index_sizes[0]:
+                indece_slices.append((1, index_sizes[0]))
+                indece_slices.append((1, int(params['size']) - index_sizes[0]))
+            else:
+                indece_slices.append((1, params['size']))
+                indece_slices.append(None)
+        else:
+            read_all = True
+
         all_results = []
+        i = 0
         for es_index in self.elastic_indeces:
+            response = None
             try:
                 params['index'] = es_index
+                if indece_slices[i]:
+                    params['start'] = indece_slices[i][0]
+                    params['size'] = indece_slices[i][1]
                 #params['organization'] = "Climate Systems Analysis Group"
-                print("es query params {}".format(str(params)))
-                response = requests.post(url=base_url, params=params)
+                    print("es query params {} {}".format(str(params), es_index))
+                    response = requests.post(url=base_url, params=params)
+                elif read_all:
+                    print("es query params {} {}".format(str(params), es_index))
+                    response = requests.post(url=base_url, params=params)
+                i = i + 1
             except requests.exceptions.ConnectionError as e:
                 LOGGER.error('ConnectError connecting to Elastic search backend: {}'.format(e))
                 return ['0', []]
@@ -311,63 +353,60 @@ class ElasticSearchRepository(object):
                 LOGGER.error('Elastic search backend error: {}'.format(e))
                 return ['0', []]
 
-            if response.status_code != 200:
-                LOGGER.error('Request failed with return code: %s' % (
-                    response.status_code))
-                return ['0', []]
+            if response:
+                if response.status_code != 200:
+                    LOGGER.error('Request failed with return code: %s' % (
+                        response.status_code))
+                    return ['0', []]
 
-            try:
-                json_dict = json.loads(response.text)
-            except Exception as e:
-                LOGGER.error('Response is not valid json: {}'.format(e))
-                return ['0', []]
+                try:
+                    json_dict = json.loads(response.text)
+                except Exception as e:
+                    LOGGER.error('Response is not valid json: {}'.format(e))
+                    return ['0', []]
 
-            if not json_dict.get('success', False):
-                LOGGER.error('Backend request was unsuccess')
-                return ['0', []]
-            if not json_dict.get('results', False):
-                LOGGER.error('Backend returned no results')
-                return ['0', []]
+                if not json_dict.get('success', False):
+                    LOGGER.error('Backend request was unsuccess')
+                    return ['0', []]
+                if not json_dict.get('results', False):
+                    LOGGER.error('Backend returned no results')
+                    return ['0', []]
 
-            results = self.transpose_records(json_dict['results'])
-            all_results = all_results + results
+                results = self.transpose_records(json_dict['results'])
+                all_results = all_results + results
         return [str(len(all_results)), all_results]
 
-    def _get_total_records(self, base_url, params={}):
-        responses_from_indeces = []
-        for es_index in self.elastic_indeces:
-            try:
-                # TODO: below approach gets total records implictly by requesting all titles
-                #       refactor when elastic-agent supports total records at index request
-                #       set response size (# of records) to max allowable by elastic-agent (10000)
-                #params['organization'] = "Climate Systems Analysis Group"
-                #params['match'] = "must_not"
-                params['index'] = es_index
-                params['fields'] = 'metadata_json.titles.title'
-                params['size'] = 10000
-                response = requests.post(url=base_url, params=params)
-                responses_from_indeces.append(response)
-            except requests.exceptions.ConnectionError as e:
-                print('ConnectError connecting to Elastic search backend: {}'.format(e))
-                raise
-            except Exception as e:
-                print('Elastic search backend error: {}'.format(e))
-                raise
+    def _get_total_records(self, base_url, es_index, params={}):
+        try:
+            # TODO: below approach gets total records implictly by requesting all titles
+            #       refactor when elastic-agent supports total records at index request
+            #       set response size (# of records) to max allowable by elastic-agent (10000)
+            #params['organization'] = "Climate Systems Analysis Group"
+            #params['match'] = "must_not"
+            params['index'] = es_index
+            params['fields'] = 'metadata_json.titles.title'
+            params['size'] = 10000
+            response = requests.post(url=base_url, params=params)
+        except requests.exceptions.ConnectionError as e:
+            print('ConnectError connecting to Elastic search backend: {}'.format(e))
+            raise
+        except Exception as e:
+            print('Elastic search backend error: {}'.format(e))
+            raise
 
         total_records = 0
-        for response in responses_from_indeces:
-            if response.status_code != 200:
-                error = 'Total records request failed with return code: %s' % (response.status_code)
-                print(error)
-                raise Exception(error)
+        if response.status_code != 200:
+            error = 'Total records request failed with return code: %s' % (response.status_code)
+            print(error)
+            raise Exception(error)
 
-            try:
-                json_dict = json.loads(response.text)
-                total_records = total_records + int(json_dict['result_length'])
-            except Exception as e:
-                error = 'Response is not valid json: {}'.format(e)
-                LOGGER.error(error)
-                raise Exception(error)
+        try:
+            json_dict = json.loads(response.text)
+            total_records = int(json_dict['result_length'])
+        except Exception as e:
+            error = 'Response is not valid json: {}'.format(e)
+            LOGGER.error(error)
+            raise Exception(error)
         return total_records
 
     def elastic_available(self, url):
