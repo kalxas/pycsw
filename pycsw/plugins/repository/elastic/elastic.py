@@ -55,7 +55,9 @@ class ElasticSearchRepository(object):
         self.context = context
         self.filter = repo_filter
         self.filter = repo_filter.split(',')[0]
-        self.elastic_index = repo_filter.split(',')[1]
+        #self.elastic_index = repo_filter.split(',')[1]
+        self.elastic_indeces= repo_filter.split(',')[1:len(repo_filter)-1]
+        
         self.fts = False
         self.label = 'ElasticSearch'
         self.local_ingest = True
@@ -295,70 +297,78 @@ class ElasticSearchRepository(object):
         return query
 
     def _run_es_query(self, base_url, params):
+        all_results = []
+        for es_index in self.elastic_indeces:
+            try:
+                params['index'] = es_index
+                #params['organization'] = "Climate Systems Analysis Group"
+                print("es query params {}".format(str(params)))
+                response = requests.post(url=base_url, params=params)
+            except requests.exceptions.ConnectionError as e:
+                LOGGER.error('ConnectError connecting to Elastic search backend: {}'.format(e))
+                return ['0', []]
+            except Exception as e:
+                LOGGER.error('Elastic search backend error: {}'.format(e))
+                return ['0', []]
 
-        try:
-            params['index'] = self.elastic_index
-            #params['organization'] = "Climate Systems Analysis Group"
-            print("es query params {}".format(str(params)))
-            response = requests.post(url=base_url, params=params)
-        except requests.exceptions.ConnectionError as e:
-            LOGGER.error('ConnectError connecting to Elastic search backend: {}'.format(e))
-            return ['0', []]
-        except Exception as e:
-            LOGGER.error('Elastic search backend error: {}'.format(e))
-            return ['0', []]
+            if response.status_code != 200:
+                LOGGER.error('Request failed with return code: %s' % (
+                    response.status_code))
+                return ['0', []]
 
-        if response.status_code != 200:
-            LOGGER.error('Request failed with return code: %s' % (
-                response.status_code))
-            return ['0', []]
+            try:
+                json_dict = json.loads(response.text)
+            except Exception as e:
+                LOGGER.error('Response is not valid json: {}'.format(e))
+                return ['0', []]
 
-        try:
-            json_dict = json.loads(response.text)
-        except Exception as e:
-            LOGGER.error('Response is not valid json: {}'.format(e))
-            return ['0', []]
+            if not json_dict.get('success', False):
+                LOGGER.error('Backend request was unsuccess')
+                return ['0', []]
+            if not json_dict.get('results', False):
+                LOGGER.error('Backend returned no results')
+                return ['0', []]
 
-        if not json_dict.get('success', False):
-            LOGGER.error('Backend request was unsuccess')
-            return ['0', []]
-        if not json_dict.get('results', False):
-            LOGGER.error('Backend returned no results')
-            return ['0', []]
-
-        results = self.transpose_records(json_dict['results'])
-        return [str(len(results)), results]
+            results = self.transpose_records(json_dict['results'])
+            all_results = all_results + results
+        return [str(len(all_results)), all_results]
 
     def _get_total_records(self, base_url, params={}):
-        try:
-            # TODO: below approach gets total records implictly by requesting all titles
-            #       refactor when elastic-agent supports total records at index request
-            #       set response size (# of records) to max allowable by elastic-agent (10000)
-            #params['organization'] = "Climate Systems Analysis Group"
-            #params['match'] = "must_not"
-            params['index'] = self.elastic_index
-            params['fields'] = 'metadata_json.titles.title'
-            params['size'] = 10000
-            response = requests.post(url=base_url, params=params)
-        except requests.exceptions.ConnectionError as e:
-            print('ConnectError connecting to Elastic search backend: {}'.format(e))
-            return
-        except Exception as e:
-            print('Elastic search backend error: {}'.format(e))
-            return
+        responses_from_indeces = []
+        for es_index in self.elastic_indeces:
+            try:
+                # TODO: below approach gets total records implictly by requesting all titles
+                #       refactor when elastic-agent supports total records at index request
+                #       set response size (# of records) to max allowable by elastic-agent (10000)
+                #params['organization'] = "Climate Systems Analysis Group"
+                #params['match'] = "must_not"
+                params['index'] = es_index
+                params['fields'] = 'metadata_json.titles.title'
+                params['size'] = 10000
+                response = requests.post(url=base_url, params=params)
+                responses_from_indeces.append(response)
+            except requests.exceptions.ConnectionError as e:
+                print('ConnectError connecting to Elastic search backend: {}'.format(e))
+                raise
+            except Exception as e:
+                print('Elastic search backend error: {}'.format(e))
+                raise
 
-        if response.status_code != 200:
-            print('Request failed with return code: %s' % (
-                response.status_code))
-            return
+        total_records = 0
+        for response in responses_from_indeces:
+            if response.status_code != 200:
+                error = 'Total records request failed with return code: %s' % (response.status_code)
+                print(error)
+                raise Exception(error)
 
-        try:
-            json_dict = json.loads(response.text)
-            total_records = int(json_dict['result_length'])
-            return total_records
-        except Exception as e:
-            LOGGER.error('Response is not valid json: {}'.format(e))
-            return
+            try:
+                json_dict = json.loads(response.text)
+                total_records = total_records + int(json_dict['result_length'])
+            except Exception as e:
+                error = 'Response is not valid json: {}'.format(e)
+                LOGGER.error(error)
+                raise Exception(error)
+        return total_records
 
     def elastic_available(self, url):
         try:
