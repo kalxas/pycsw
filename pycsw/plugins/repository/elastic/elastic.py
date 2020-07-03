@@ -90,10 +90,11 @@ class ElasticSearchRepository(object):
         """
         Query by list of identifiers
         """
-
         query = {'metadata_json.identifier.identifier': ids}
-        results = self._run_es_query(self.filter, query)
-
+        for es_index in self.elastic_indeces:
+            results = self._es_single_record_query(self.filter, query, es_index)
+            if int(results[0]) > 0:
+                break
         return results[1]
 
     def query_domain(self, domain, typenames, domainquerytype='list', count=False):
@@ -408,6 +409,42 @@ class ElasticSearchRepository(object):
             LOGGER.error(error)
             raise Exception(error)
         return total_records
+
+    def _es_single_record_query(self, base_url, params, es_index):
+        response = None
+        try:
+            params['index'] = es_index
+            print("es query params {} {}".format(str(params), es_index))
+            response = requests.post(url=base_url, params=params)
+        except requests.exceptions.ConnectionError as e:
+            LOGGER.error('ConnectError connecting to Elastic search backend: {}'.format(e))
+            return ['0', []]
+        except Exception as e:
+            LOGGER.error('Elastic search backend error: {}'.format(e))
+            return ['0', []]
+
+        if response:
+            if response.status_code != 200:
+                LOGGER.error('Request failed with return code: %s' % (
+                    response.status_code))
+                return ['0', []]
+
+            try:
+                json_dict = json.loads(response.text)
+            except Exception as e:
+                LOGGER.error('Response is not valid json: {}'.format(e))
+                return ['0', []]
+
+            if not json_dict.get('success', False):
+                LOGGER.error('Backend request was unsuccess')
+                return ['0', []]
+            if not json_dict.get('results', False):
+                LOGGER.error('Backend returned no results')
+                return ['0', []]
+
+            results = self.transpose_records(json_dict['results'])
+
+        return [str(len(results)), results]
 
     def elastic_available(self, url):
         try:
