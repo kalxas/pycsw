@@ -556,15 +556,28 @@ class ElasticSearchRepository(object):
                     # Add all subjects
                     keywords.append(subject)
             result['keywords'] = ','.join(keywords)
-        
+
+
         descr_keywords = record.get('descriptiveKeywords', False)
-        if descr_keywords:
+        if descr_keywords:            
+            def get_keyword_type(k_type):
+                ktype_mappings = {'theme':'project', 'place':'geographic-location','stratum':'instrument'}
+                if k_type in ktype_mappings:
+                    return ktype_mappings[k_type]
+                else:
+                    return None
+
             keywords = []
             for d_kword in descr_keywords:
-                d_keyword = d_kword['keyword']
+                tmp_list = []
+                kw_type = get_keyword_type(d_kword['keywordType'])
+                if kw_type:
+                    tmp_list.append(kw_type)
+                tmp_list.append(d_kword['keyword'])
+                d_keyword = ": ".join(tmp_list)
                 keywords.append(d_keyword)
             dk_list = ','.join(keywords)
-            result['keywords'] += dk_list
+            result['keywords'] += ',' + dk_list
 
         topic_categories = record.get('topicCategories', False)
         if topic_categories:
