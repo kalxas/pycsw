@@ -307,8 +307,15 @@ class ElasticSearchRepository(object):
     def _run_es_query(self, base_url, params, index_sizes=[]):
         # {'start': 10, 'index': u'sans-1878-mims-parent-records-1', 'size': '10'}
         # TODO: the below index slicing for mulitple indexes only works for one or two indeces
+
+        # set start to align with elastic search query
+        if 'start' in params:
+            params['start'] = params['start'] + 1
+
         indece_slices = []
         read_all = False
+        #print("PARAMS {}".format(params))
+        #print("INDEX SIZES {}".format(index_sizes))
         if (len(index_sizes) > 1) and ('start' in params) and ('size' in params):
             if int(params['start']) > index_sizes[0]:
                 indece_slices.append(None)
@@ -337,6 +344,7 @@ class ElasticSearchRepository(object):
             response = None
             try:
                 params['index'] = es_index
+                #print("indec slices {} at index {}".format(indece_slices,i))
                 if indece_slices[i]:
                     params['start'] = indece_slices[i][0]
                     params['size'] = indece_slices[i][1]
