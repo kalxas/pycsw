@@ -320,8 +320,8 @@ class ElasticSearchRepository(object):
             if int(params['start']) > index_sizes[0]:
                 indece_slices.append(None)
                 indece_slices.append((int(params['start']) - index_sizes[0], params['size']))
-            elif int(params['start']) < index_sizes[0]:
-                ind_diff_1 = index_sizes[0] - int(params['start'])
+            elif int(params['start']) <= index_sizes[0]:
+                ind_diff_1 = index_sizes[0] - int(params['start']) + 1
                 if int(params['size']) <= ind_diff_1:
                     indece_slices.append((params['start'], params['size']))
                     indece_slices.append(None)
