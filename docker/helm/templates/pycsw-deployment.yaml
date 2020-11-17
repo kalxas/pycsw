@@ -20,6 +20,8 @@ spec:
       - env:
         - name: PYCSW_SERVER_URL
           value: http://172.17.0.3:30000
+        - name: PYCSW_REPOSITORY_DATABASE_URI
+          value: postgresql://postgres:mypass@resource-catalogue-db/pycsw
         image: 'geopython/pycsw:latest'
         name: pycsw
         ports:
