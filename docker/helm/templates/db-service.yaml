@@ -3,7 +3,7 @@ kind: Service
 metadata:
   labels:
     io.kompose.service: db
-  name: db
+  name: resource-catalogue-db
 spec:
   ports:
   - name: "5432"

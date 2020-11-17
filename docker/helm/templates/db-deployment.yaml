@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   labels:
     io.kompose.service: db
-  name: db
+  name: resource-catalogue-db
 spec:
   replicas: 1
   selector:

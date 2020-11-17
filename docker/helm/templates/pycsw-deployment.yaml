@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   labels:
     io.kompose.service: pycsw
-  name: pycsw
+  name: resource-catalogue-service
 spec:
   replicas: 1
   selector:
@@ -19,7 +19,7 @@ spec:
       containers:
       - env:
         - name: PYCSW_SERVER_URL
-          value: http://localhost:8000
+          value: http://172.17.0.3:30000
         image: 'geopython/pycsw:latest'
         name: pycsw
         ports:

@@ -3,7 +3,7 @@ kind: Service
 metadata:
   labels:
     io.kompose.service: pycsw
-  name: pycsw
+  name: resource-catalogue-service
 spec:
   type: NodePort
   ports:
