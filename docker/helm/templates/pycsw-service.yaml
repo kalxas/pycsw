@@ -5,10 +5,12 @@ metadata:
     io.kompose.service: pycsw
   name: resource-catalogue-service
 spec:
-  type: NodePort
+  type: ClusterIP
   ports:
-    - port: 8000
-      nodePort: 30000
+    - port: 80
+      targetPort: 8000
+      protocol: TCP
+      name: http
   selector:
     io.kompose.service: pycsw
 status:

@@ -31,12 +31,12 @@ spec:
         ports:
         - containerPort: 5432
         resources: {}
-        volumeMounts:
-        - mountPath: /var/lib/postgresql/data/pgdata
-          name: db-data
+        # volumeMounts:
+        # - mountPath: /var/lib/postgresql/data/pgdata
+        #   name: db-data
       restartPolicy: Always
       volumes:
-      - name: db-data
-        persistentVolumeClaim:
-          claimName: db-data
+      # - name: db-data
+      #   persistentVolumeClaim:
+      #     claimName: db-data
 status: {}

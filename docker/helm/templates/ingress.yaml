@@ -1,0 +1,13 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: resource-catalogue
+#   namespace: eoepca
+spec:
+  rules:
+  - host: resource-catalogue.test.185.52.193.87.nip.io
+    http:
+      paths:
+      - backend:
+          serviceName: resource-catalogue-service
+          servicePort: http
